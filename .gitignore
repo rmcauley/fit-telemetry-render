@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# GoPro joiner directories
+/in
+in.txt
+
+# ffmpeg directories
+/bin
+/doc
+/presets
