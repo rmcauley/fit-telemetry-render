@@ -131,6 +131,7 @@ dmypy.json
 # GoPro joiner directories
 /in
 in.txt
+merge.mp4
 
 # ffmpeg directories
 /bin

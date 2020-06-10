@@ -5,8 +5,9 @@ import json
 import subprocess
 import shutil
 import shlex
+import re
 from typing import List, Union
-from stat import S_ISREG, ST_CTIME, ST_MODE, ST_SIZE
+from stat import S_ISREG, ST_MODE, ST_SIZE
 
 from moviepy.video.io.VideoFileClip import VideoFileClip
 
@@ -14,6 +15,7 @@ INGEST_PATH = "in"
 FFMPEG_PLAYLIST_PATH = "in.txt"
 OUTPUT_PATH = "merge.mp4"
 NVIDIA_MAX_BITRATE = 50000
+GOPRO_FILENAME_REGEX = re.compile(r"GX(\d\d)(\d+)\.MP4", flags=re.IGNORECASE)
 
 
 def get_ffmpeg_bin(executable_name="ffmpeg"):
@@ -72,17 +74,31 @@ def get_ffmpeg_args(
 
 
 class GoProMovie:
-    ctime: int
     size: int
     path: str
     filename: str
     rotation: Union[str, None] = None
+    video_id: str
+    chain_index: str
+
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        return self.path
 
     def __init__(self, filename: str, path: str, statinfo: os.stat_result) -> None:
         self.filename = filename
         self.path = path
-        self.ctime = statinfo[ST_CTIME]
         self.size = statinfo[ST_SIZE]
+        result = GOPRO_FILENAME_REGEX.match(filename)
+        if not result:
+            raise ValueError(f"Not a recognizable GoPro file: {filename}")
+        self.video_id = result[2]
+        self.chain_index = result[1]
+
+    def to_sortable(self):
+        return f"{self.video_id}-{self.chain_index}"
 
 
 movie_files: List[GoProMovie] = []
@@ -91,8 +107,8 @@ for filename in os.listdir(INGEST_PATH):
     statinfo = os.stat(filename_with_path)
     if S_ISREG(statinfo[ST_MODE]):
         movie_files.append(GoProMovie(filename, filename_with_path, statinfo))
-movie_files = sorted(movie_files, key=lambda m: m.ctime)
-movie_files.reverse()
+movie_files.sort(key=lambda m: m.to_sortable())
+
 
 total_length = 0
 total_size = 0
