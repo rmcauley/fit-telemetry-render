@@ -112,7 +112,7 @@ movie_files.sort(key=lambda m: m.to_sortable())
 
 total_length = 0
 total_size = 0
-rotations = []
+rotations = set()
 
 for movie in movie_files:
     print(f"Inspecting: {movie.path}")
@@ -134,7 +134,7 @@ for movie in movie_files:
         ).stdout
     )
     movie.rotation = result["streams"][0]["tags"].get("rotate")
-    rotations.append(movie.rotation)
+    rotations.add(movie.rotation)
 
 total_size_mb = int(total_size / 1024 / 1024)
 total_size_gb = int(total_size_mb / 1024)
@@ -148,7 +148,6 @@ print(
         total_size_gb,
     )
 )
-
 
 if total_size_gb > 125 or len(rotations) > 1:
     # https://trac.ffmpeg.org/wiki/Encode/H.265
@@ -187,6 +186,7 @@ else:
         "-safe 0",
         f"-i {FFMPEG_PLAYLIST_PATH}",
         "-c copy",
+        "-movflags +faststart",
         OUTPUT_PATH,
     ]
 
