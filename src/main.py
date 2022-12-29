@@ -1,12 +1,16 @@
 import sys
-from PyQt6.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QHBoxLayout, QVBoxLayout
-from PyQt6.QtGui import QPalette, QColor
-from PyQt6.QtCore import QSettings, QPoint, QSize
+import logging
+
+from PySide6.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QHBoxLayout, QVBoxLayout
+from PySide6.QtGui import QPalette, QColor
+from PySide6.QtCore import QSettings, QPoint, QSize
 
 from state import GoProState
 from gui.export import ExportWidget
 from gui.fit import FitLayout
-from gui.video.layout import VideoLayout
+from gui.video import VideoLayout
+
+logging.getLogger('libav').setLevel(logging.ERROR)  # removes warning: deprecated pixel format used
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -25,7 +29,7 @@ class MainWindow(QMainWindow):
         export_layout = QHBoxLayout()
         layout.addLayout(export_layout, 1)
 
-        fit_video_layout.addLayout(FitLayout(), 1)
+        fit_video_layout.addLayout(FitLayout(self.settings, self.state), 1)
         fit_video_layout.addLayout(VideoLayout(self.settings, self.state), 3)
         export_layout.addWidget(ExportWidget())
 

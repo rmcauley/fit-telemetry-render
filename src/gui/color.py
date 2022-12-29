@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QHBoxLayout, QVBoxLayout
-from PyQt6.QtGui import QPalette, QColor
+from PySide6.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QHBoxLayout, QVBoxLayout
+from PySide6.QtGui import QPalette, QColor
 
 class Color(QWidget):
     def __init__(self, color):

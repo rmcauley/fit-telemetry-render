@@ -1,15 +1,18 @@
 import os
 import sys
-from PyQt6.QtCore import QStandardPaths, Qt, QSettings
-from PyQt6.QtGui import QAction, QIcon, QKeySequence, QScreen, QColor, QPalette
-from PyQt6.QtWidgets import (QApplication, QDialog, QFileDialog, QStackedLayout,
+import av
+
+from PySide6.QtCore import QStandardPaths, Qt, QSettings
+from PySide6.QtGui import QAction, QIcon, QKeySequence, QScreen, QColor, QPalette, QPixelFormat, QImage
+from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QStackedLayout, QLabel,
     QMainWindow, QSlider, QStyle, QToolBar, QWidget, QPushButton, QVBoxLayout, QHBoxLayout)
-from PyQt6.QtMultimedia import (QAudio, QAudioOutput, QMediaFormat,
-                                  QMediaPlayer, QVideoSink, QVideoFrame)
-from PyQt6.QtMultimediaWidgets import QVideoWidget
+from PySide6.QtMultimedia import (QAudio, QAudioOutput, QMediaFormat,
+                                  QMediaPlayer, QVideoSink, QVideoFrame, QVideoFrameFormat)
+from PySide6.QtMultimediaWidgets import QVideoWidget
+
+from PIL import Image
 
 from state import GoProState
-from .frame_provider import FrameProvider
 
 MP4 = 'video/mp4'
 
@@ -25,6 +28,7 @@ class VideoLayout(QVBoxLayout):
         super().__init__()
 
         self._settings = settings
+        self._state = state
 
         self._audio_output = QAudioOutput()
 
@@ -39,10 +43,16 @@ class VideoLayout(QVBoxLayout):
 
         self._video_widget = QVideoWidget()
         self._output_video_sink = self._video_widget.videoSink()
-        self.addWidget(self._video_widget)
+        self.addWidget(self._video_widget, stretch=10)
+
+        sensors_at = QHBoxLayout()
+        self._speed_at = QLabel()
+        self._speed_at.setText("hello")
+        sensors_at.addWidget(self._speed_at)
+        self.addLayout(sensors_at, stretch=1)
 
         tool_bar = QHBoxLayout()
-        self.addLayout(tool_bar)
+        self.addLayout(tool_bar, stretch=1)
 
         self._open_button = QPushButton("Open Video")
         self._open_button.clicked.connect(self.open)
@@ -69,7 +79,7 @@ class VideoLayout(QVBoxLayout):
 
         self.update_buttons(self._player.playbackState())
         self._mime_types = []
-
+        
     def closeEvent(self, event):
         self._ensure_stopped()
         event.accept()
@@ -93,6 +103,7 @@ class VideoLayout(QVBoxLayout):
         file_dialog.setDirectory(movies_location)
         if file_dialog.exec() == QDialog.DialogCode.Accepted:
             url = file_dialog.selectedUrls()[0]
+            self._overlay = None
             if url.isLocalFile():
                 self._settings.setValue("movie_file_path", os.path.dirname(url.toLocalFile()))
             self._player.setSource(url)
@@ -114,6 +125,9 @@ class VideoLayout(QVBoxLayout):
         print(error_string, file=sys.stderr)
         self.show_status_message(error_string)
 
-    def _handle_overlay(self, frame: QVideoFrame):
-        print(frame.pixelFormat())
-        self._video_widget.videoSink().setVideoFrame(frame)
+    def _handle_overlay(self, video_frame: QVideoFrame):
+        if self._state.fit:
+            k = round(video_frame.startTime() / 1000000)
+            fit_frame = self._state.fit.get(k, {})
+            self._speed_at.setText(str(fit_frame.get("speed", "--")))
+        self._video_widget.videoSink().setVideoFrame(video_frame)
