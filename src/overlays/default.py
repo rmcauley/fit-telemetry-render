@@ -1,13 +1,9 @@
-from PIL import Image, ImageDraw
+from PIL import Image
 
-class DefaultOverlay:
-    _im: Image
-    _draw: ImageDraw
+from .base import BaseOverlay
 
-    def __init__(self, w: int, h: int):
-        self._im = Image.new("RGBA", (w, h))
-        self._draw = ImageDraw.Draw(self._im)
 
+class DefaultOverlay(BaseOverlay):
     def overlay(self, timestamp: int) -> Image.Image:
         self._draw.rectangle((0, 0, self._im.width, self._im.height), fill=(0, 0, 0, 0))
         self._draw.line((0, 0) + self._im.size, fill=128)

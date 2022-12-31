@@ -1,37 +1,50 @@
 import sys
 import logging
 
-from PySide6.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QHBoxLayout, QVBoxLayout
-from PySide6.QtGui import QPalette, QColor
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QApplication,
+    QWidget,
+    QHBoxLayout,
+    QVBoxLayout,
+)
 from PySide6.QtCore import QSettings, QPoint, QSize
 
 from state import GoProState
 from gui.export import ExportWidget
 from gui.fit import FitLayout
 from gui.video import VideoLayout
+from gui.offset import OffsetLayout
 
-logging.getLogger('libav').setLevel(logging.ERROR)  # removes warning: deprecated pixel format used
+# removes warning: deprecated pixel format used
+logging.getLogger("libav").setLevel(logging.ERROR)
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.settings = QSettings('rmcauley', 'GoPro Telemetry')
-        self.state = GoProState()
 
         self.setWindowTitle("GoPro Telemetry")
+
+        self.settings = QSettings("rmcauley", "GoPro Telemetry")
+        self.state = GoProState()
 
         self.resize(self.settings.value("size", QSize(270, 225)))
         self.move(self.settings.value("pos", QPoint(50, 50)))
 
         layout = QVBoxLayout()
-        fit_video_layout = QHBoxLayout()
-        layout.addLayout(fit_video_layout, 9)
-        export_layout = QHBoxLayout()
-        layout.addLayout(export_layout, 1)
 
-        fit_video_layout.addLayout(FitLayout(self.settings, self.state), 1)
-        fit_video_layout.addLayout(VideoLayout(self.settings, self.state), 3)
+        fit_video_layout = QHBoxLayout()
+        fit_video_layout.addLayout(FitLayout(self.settings, self.state))
+        fit_video_layout.addLayout(VideoLayout(self.settings, self.state))
+        layout.addLayout(fit_video_layout, stretch=9)
+
+        offset_layout = OffsetLayout(self.settings, self.state)
+        layout.addLayout(offset_layout, stretch=1)
+
+        export_layout = QHBoxLayout()
         export_layout.addWidget(ExportWidget())
+        layout.addLayout(export_layout, stretch=1)
 
         central_widget = QWidget()
         central_widget.setLayout(layout)
@@ -44,7 +57,8 @@ class MainWindow(QMainWindow):
         self.settings.setValue("pos", self.pos())
 
         e.accept()
-        
+
+
 app = QApplication(sys.argv)
 w = MainWindow()
 w.show()

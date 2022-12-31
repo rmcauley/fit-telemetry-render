@@ -1,20 +1,29 @@
 import os
 import sys
-import av
 
 from PySide6.QtCore import QStandardPaths, Qt, QSettings
-from PySide6.QtGui import QAction, QIcon, QKeySequence, QScreen, QColor, QPalette, QPixelFormat, QImage
-from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QStackedLayout, QLabel,
-    QMainWindow, QSlider, QStyle, QToolBar, QWidget, QPushButton, QVBoxLayout, QHBoxLayout)
-from PySide6.QtMultimedia import (QAudio, QAudioOutput, QMediaFormat,
-                                  QMediaPlayer, QVideoSink, QVideoFrame, QVideoFrameFormat)
+from PySide6.QtWidgets import (
+    QDialog,
+    QFileDialog,
+    QLabel,
+    QSlider,
+    QPushButton,
+    QVBoxLayout,
+    QHBoxLayout,
+)
+from PySide6.QtMultimedia import (
+    QAudioOutput,
+    QMediaFormat,
+    QMediaPlayer,
+    QVideoSink,
+    QVideoFrame,
+)
 from PySide6.QtMultimediaWidgets import QVideoWidget
-
-from PIL import Image
 
 from state import GoProState
 
-MP4 = 'video/mp4'
+MP4 = "video/mp4"
+
 
 def get_supported_mime_types():
     result = []
@@ -22,6 +31,7 @@ def get_supported_mime_types():
         mime_type = QMediaFormat(f).mimeType()
         result.append(mime_type.name())
     return result
+
 
 class VideoLayout(QVBoxLayout):
     def __init__(self, settings: QSettings, state: GoProState):
@@ -79,7 +89,7 @@ class VideoLayout(QVBoxLayout):
 
         self.update_buttons(self._player.playbackState())
         self._mime_types = []
-        
+
     def closeEvent(self, event):
         self._ensure_stopped()
         event.accept()
@@ -99,13 +109,20 @@ class VideoLayout(QVBoxLayout):
         if default_mimetype in self._mime_types:
             file_dialog.selectMimeTypeFilter(default_mimetype)
 
-        movies_location = self._settings.value("movie_file_path", QStandardPaths.writableLocation(QStandardPaths.StandardLocation.MoviesLocation))
+        movies_location = self._settings.value(
+            "movie_file_path",
+            QStandardPaths.writableLocation(
+                QStandardPaths.StandardLocation.MoviesLocation
+            ),
+        )
         file_dialog.setDirectory(movies_location)
         if file_dialog.exec() == QDialog.DialogCode.Accepted:
             url = file_dialog.selectedUrls()[0]
             self._overlay = None
             if url.isLocalFile():
-                self._settings.setValue("movie_file_path", os.path.dirname(url.toLocalFile()))
+                self._settings.setValue(
+                    "movie_file_path", os.path.dirname(url.toLocalFile())
+                )
             self._player.setSource(url)
             self._player.play()
 

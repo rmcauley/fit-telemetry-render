@@ -1,3 +1,5 @@
 av
 pillow
 pyside6
+pyee
+folium
