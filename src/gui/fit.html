@@ -125,14 +125,24 @@
       weight: 3,
     }).addTo(map);
 
-    var marker;
+    var offsetMarker;
 
-    function linePointSet(lat, long) {
-      if (marker) {
-        marker.removeFrom(map);
+    function setOffsetPoint(lat, long) {
+      if (offsetMarker) {
+        offsetMarker.removeFrom(map);
       }
-      marker = L.marker([lat, long]);
-      marker.addTo(map);
+      offsetMarker = L.marker([lat, long]);
+      offsetMarker.addTo(map);
+    }
+
+    var currentMarker;
+
+    function setCurrentPoint(lat, long) {
+      if (currentMarker) {
+        currentMarker.removeFrom(map);
+      }
+      currentMarker = L.marker([lat, long], { opacity: 0.8 });
+      currentMarker.addTo(map);
     }
   </script>
 </html>

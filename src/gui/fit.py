@@ -1,7 +1,7 @@
 import os
 import json
 
-from PySide6.QtCore import QStandardPaths
+from PySide6.QtCore import QStandardPaths, Slot
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
@@ -31,6 +31,8 @@ class FitLayout(QVBoxLayout):
 
         self._web = QWebEngineView()
         self._web.setHtml("")
+        self._web.loadFinished.connect(self.show_offset)
+        self._web.loadFinished.connect(self.show_current)
         self.addWidget(self._web, stretch=11)
 
         tool_bar = QHBoxLayout()
@@ -43,6 +45,9 @@ class FitLayout(QVBoxLayout):
         self._offset = QLabel()
         self._offset.setText("0")
         tool_bar.addWidget(self._offset)
+
+        self._state.fitOffsetChange.connect(self.show_offset)
+        self._state.videoSecChange.connect(self.show_current)
 
     def open(self):
         file_dialog = QFileDialog(self.parentWidget(), filter="fit(*.fit)")
@@ -86,6 +91,26 @@ class FitLayout(QVBoxLayout):
                 f.write(html)
 
             self._web.setHtml(html)
+
+            # TODO: Match timestamp to video?
+            self._state.fit_offset = next(iter(fit.keys()), 0)
+
+    def show_offset(self):
+        offset = self._state.fit_offset or 0
+        point = self._state.fit.get_point(offset)
+        if point:
+            lat = point["position_lat"]
+            long = point["position_long"]
+            self._web.page().runJavaScript(f"setOffsetPoint({lat}, {long})")
+
+    def show_current(self):
+        offset = self._state.video_sec or 0
+        print(offset)
+        point = self._state.fit.get_point(offset)
+        if point:
+            lat = point["position_lat"]
+            long = point["position_long"]
+            self._web.page().runJavaScript(f"setCurrentPoint({lat}, {long})")
 
     def generate_folium_html(self):
         fit = self._state.fit

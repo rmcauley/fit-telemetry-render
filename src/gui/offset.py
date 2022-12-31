@@ -21,7 +21,15 @@ class OffsetLayout(QHBoxLayout):
         self._slider.setMaximum(100)
         self._slider.setValue(0)
         self._slider.valueChanged.connect(self.seek)
-        self.addWidget.addWidget(self._slider)
+        self.addWidget(self._slider)
+
+        self._state.fitChange.connect(self.on_fit)
 
     def seek(self, v):
         self._state.fit_offset = v
+
+    def on_fit(self):
+        keys = self._state.fit.keys()
+        self._slider.setMinimum(min(keys))
+        self._slider.setMaximum(max(keys))
+        self._slider.setValue(self._state.fit_offset)

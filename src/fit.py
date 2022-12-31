@@ -25,6 +25,16 @@ class FitDict(OrderedDict):
     def set_unit(self, key: str, unit: str) -> None:
         self.units[key] = unit
 
+    def get_point(self, second: int) -> dict:
+        d = None
+        attempts = 0
+        while d is None:
+            d = self.get(second - attempts, None)
+            attempts += 1
+            if attempts > 5:
+                break
+        return d
+
 
 def get_fit_dict(path: str) -> FitDict:
     fitted = FitDict()

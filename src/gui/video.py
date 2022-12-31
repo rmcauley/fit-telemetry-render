@@ -15,7 +15,6 @@ from PySide6.QtMultimedia import (
     QAudioOutput,
     QMediaFormat,
     QMediaPlayer,
-    QVideoSink,
     QVideoFrame,
 )
 from PySide6.QtMultimediaWidgets import QVideoWidget
@@ -41,19 +40,18 @@ class VideoLayout(QVBoxLayout):
         self._state = state
 
         self._audio_output = QAudioOutput()
+        self._audio_output.setMuted(True)
 
-        self._input_video_sink = QVideoSink()
-        self._input_video_sink.videoFrameChanged.connect(self._handle_overlay)
+        self._video_widget = QVideoWidget()
+        self.addWidget(self._video_widget, stretch=10)
 
         self._player = QMediaPlayer()
         self._player.setAudioOutput(self._audio_output)
         self._player.errorOccurred.connect(self._player_error)
         self._player.playbackStateChanged.connect(self.update_buttons)
-        self._player.setVideoSink(self._input_video_sink)
-
-        self._video_widget = QVideoWidget()
-        self._output_video_sink = self._video_widget.videoSink()
-        self.addWidget(self._video_widget, stretch=10)
+        self._player.durationChanged.connect(self._duration_changed)
+        self._player.positionChanged.connect(self._position_changed)
+        self._player.setVideoOutput(self._video_widget)
 
         sensors_at = QHBoxLayout()
         self._speed_at = QLabel()
@@ -76,16 +74,14 @@ class VideoLayout(QVBoxLayout):
         self._pause_action.clicked.connect(self._player.pause)
         tool_bar.addWidget(self._pause_action, stretch=0)
 
-        self._volume_slider = QSlider()
-        self._volume_slider.setOrientation(Qt.Orientation.Horizontal)
-        self._volume_slider.setMinimum(0)
-        self._volume_slider.setMaximum(100)
-        self._volume_slider.setValue(self._audio_output.volume())
-        self._volume_slider.setTickInterval(10)
-        self._volume_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
-        self._volume_slider.setToolTip("Volume")
-        self._volume_slider.valueChanged.connect(self._audio_output.setVolume)
-        tool_bar.addWidget(self._volume_slider, stretch=1)
+        self._seeker = QSlider()
+        self._seeker.setOrientation(Qt.Orientation.Horizontal)
+        self._seeker.setMinimum(0)
+        self._seeker.setMaximum(100)
+        self._seeker.setValue(0)
+        self._seeker.setDisabled(True)
+        self._seeker.valueChanged.connect(self._seek)
+        tool_bar.addWidget(self._seeker, stretch=1)
 
         self.update_buttons(self._player.playbackState())
         self._mime_types = []
@@ -124,7 +120,6 @@ class VideoLayout(QVBoxLayout):
                     "movie_file_path", os.path.dirname(url.toLocalFile())
                 )
             self._player.setSource(url)
-            self._player.play()
 
     def _ensure_stopped(self):
         if self._player.playbackState() != QMediaPlayer.PlaybackState.StoppedState:
@@ -148,3 +143,15 @@ class VideoLayout(QVBoxLayout):
             fit_frame = self._state.fit.get(k, {})
             self._speed_at.setText(str(fit_frame.get("speed", "--")))
         self._video_widget.videoSink().setVideoFrame(video_frame)
+
+    def _position_changed(self, v):
+        self._seeker.setValue(v)
+
+    def _duration_changed(self, v):
+        self._seeker.setDisabled(False)
+        self._seeker.setValue(0)
+        self._seeker.setMaximum(v)
+
+    def _seek(self, v):
+        self._state.video_sec = round(v / 1000)
+        self._player.setPosition(v)
