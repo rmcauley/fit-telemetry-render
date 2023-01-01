@@ -66,7 +66,7 @@ def get_fit_dict(path: str) -> FitDict:
                     ] = frame_values.copy()
             elif frame.frame_type == 4 and frame.name == "record":
                 for f in frame.fields:
-                    if f.field_def:
+                    if f.field_def and f.value is not None:
                         if f.units:
                             if f.field_def.name == "speed" and f.units == "m/s":
                                 f.units = "km/h"

@@ -1,5 +1,6 @@
 import os
 import sys
+from math import floor
 
 from PySide6.QtCore import QStandardPaths, Qt, QSettings
 from PySide6.QtWidgets import (
@@ -38,6 +39,7 @@ class VideoLayout(QVBoxLayout):
 
         self._settings = settings
         self._state = state
+        self._last_updated_pos = None
 
         self._audio_output = QAudioOutput()
         self._audio_output.setMuted(True)
@@ -80,7 +82,7 @@ class VideoLayout(QVBoxLayout):
         self._seeker.setMaximum(100)
         self._seeker.setValue(0)
         self._seeker.setDisabled(True)
-        self._seeker.valueChanged.connect(self._seek)
+        self._seeker.sliderMoved.connect(self._seek)
         tool_bar.addWidget(self._seeker, stretch=1)
 
         self.update_buttons(self._player.playbackState())
@@ -120,6 +122,7 @@ class VideoLayout(QVBoxLayout):
                     "movie_file_path", os.path.dirname(url.toLocalFile())
                 )
             self._player.setSource(url)
+            self._player.setPosition(0)
 
     def _ensure_stopped(self):
         if self._player.playbackState() != QMediaPlayer.PlaybackState.StoppedState:
@@ -137,15 +140,16 @@ class VideoLayout(QVBoxLayout):
         print(error_string, file=sys.stderr)
         self.show_status_message(error_string)
 
-    def _handle_overlay(self, video_frame: QVideoFrame):
-        if self._state.fit:
-            k = round(video_frame.startTime() / 1000000)
-            fit_frame = self._state.fit.get(k, {})
-            self._speed_at.setText(str(fit_frame.get("speed", "--")))
-        self._video_widget.videoSink().setVideoFrame(video_frame)
+    def _position_changed(self, pos_ms):
+        pos_s = floor(pos_ms / 1000)
 
-    def _position_changed(self, v):
-        self._seeker.setValue(v)
+        if self._last_updated_pos != pos_s:
+            self._last_updated_pos = pos_s
+            if self._state.fit:
+                fit_frame = self._state.fit.get(pos_s, {})
+                self._speed_at.setText(str(fit_frame.get("speed", "--")))
+            self._seeker.setValue(pos_ms)
+            self._state.video_sec = pos_s
 
     def _duration_changed(self, v):
         self._seeker.setDisabled(False)
@@ -153,5 +157,4 @@ class VideoLayout(QVBoxLayout):
         self._seeker.setMaximum(v)
 
     def _seek(self, v):
-        self._state.video_sec = round(v / 1000)
         self._player.setPosition(v)

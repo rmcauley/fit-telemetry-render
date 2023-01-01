@@ -20,6 +20,7 @@ class GoProState(QObject):
         self._video_path = None
         self._fit = None
         self._fit_offset = 0
+        self._video_sec = 0
 
     @property
     def video_path(self) -> str:

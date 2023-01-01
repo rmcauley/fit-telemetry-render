@@ -47,6 +47,7 @@ class FitLayout(QVBoxLayout):
         tool_bar.addWidget(self._offset)
 
         self._state.fitOffsetChange.connect(self.show_offset)
+        self._state.fitOffsetChange.connect(self.show_current)
         self._state.videoSecChange.connect(self.show_current)
 
     def open(self):
@@ -96,21 +97,22 @@ class FitLayout(QVBoxLayout):
             self._state.fit_offset = next(iter(fit.keys()), 0)
 
     def show_offset(self):
-        offset = self._state.fit_offset or 0
-        point = self._state.fit.get_point(offset)
-        if point:
-            lat = point["position_lat"]
-            long = point["position_long"]
-            self._web.page().runJavaScript(f"setOffsetPoint({lat}, {long})")
+        if self._state.fit:
+            offset = self._state.fit_offset or 0
+            point = self._state.fit.get_point(offset)
+            if point:
+                lat = point["position_lat"]
+                long = point["position_long"]
+                self._web.page().runJavaScript(f"setOffsetPoint({lat}, {long})")
 
     def show_current(self):
-        offset = self._state.video_sec or 0
-        print(offset)
-        point = self._state.fit.get_point(offset)
-        if point:
-            lat = point["position_lat"]
-            long = point["position_long"]
-            self._web.page().runJavaScript(f"setCurrentPoint({lat}, {long})")
+        if self._state.fit:
+            offset = (self._state.video_sec or 0) + self._state.fit_offset
+            point = self._state.fit.get_point(offset)
+            if point:
+                lat = point["position_lat"]
+                long = point["position_long"]
+                self._web.page().runJavaScript(f"setCurrentPoint({lat}, {long})")
 
     def generate_folium_html(self):
         fit = self._state.fit
