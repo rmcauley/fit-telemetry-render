@@ -16,11 +16,12 @@ from PySide6.QtMultimedia import (
     QAudioOutput,
     QMediaFormat,
     QMediaPlayer,
-    QVideoFrame,
 )
 from PySide6.QtMultimediaWidgets import QVideoWidget
 
 from state import GoProState
+
+from .sensor_label import SensorLabel
 
 MP4 = "video/mp4"
 
@@ -55,11 +56,16 @@ class VideoLayout(QVBoxLayout):
         self._player.positionChanged.connect(self._position_changed)
         self._player.setVideoOutput(self._video_widget)
 
-        sensors_at = QHBoxLayout()
-        self._speed_at = QLabel()
-        self._speed_at.setText("hello")
-        sensors_at.addWidget(self._speed_at)
-        self.addLayout(sensors_at, stretch=1)
+        sensors = QHBoxLayout()
+        self._sensor_speed = SensorLabel("Speed")
+        sensors.addLayout(self._sensor_speed)
+        self._sensor_bpm = SensorLabel("BPM")
+        sensors.addLayout(self._sensor_bpm)
+        self._sensor_rpm = SensorLabel("RPM")
+        sensors.addLayout(self._sensor_rpm)
+        self._sensor_elev = SensorLabel("Alt")
+        sensors.addLayout(self._sensor_elev)
+        self.addLayout(sensors, stretch=1)
 
         tool_bar = QHBoxLayout()
         self.addLayout(tool_bar, stretch=1)
@@ -79,7 +85,8 @@ class VideoLayout(QVBoxLayout):
         self._seeker = QSlider()
         self._seeker.setOrientation(Qt.Orientation.Horizontal)
         self._seeker.setMinimum(0)
-        self._seeker.setMaximum(100)
+        self._seeker.setMaximum(1000)
+        self._seeker.setSingleStep(1000)
         self._seeker.setValue(0)
         self._seeker.setDisabled(True)
         self._seeker.sliderMoved.connect(self._seek)
@@ -87,6 +94,9 @@ class VideoLayout(QVBoxLayout):
 
         self.update_buttons(self._player.playbackState())
         self._mime_types = []
+
+        self._state.fitOffsetChange.connect(self._update_sensors)
+        self._state.fitChange.connect(self._update_sensors_units)
 
     def closeEvent(self, event):
         self._ensure_stopped()
@@ -145,11 +155,25 @@ class VideoLayout(QVBoxLayout):
 
         if self._last_updated_pos != pos_s:
             self._last_updated_pos = pos_s
-            if self._state.fit:
-                fit_frame = self._state.fit.get(pos_s, {})
-                self._speed_at.setText(str(fit_frame.get("speed", "--")))
+            self._update_sensors()
             self._seeker.setValue(pos_ms)
             self._state.video_sec = pos_s
+
+    def _update_sensors(self):
+        if self._state.fit and self._last_updated_pos:
+            fit_frame = self._state.fit.get(
+                self._state.fit_offset + self._last_updated_pos, {}
+            )
+            self._sensor_speed.set_value(fit_frame.get("speed"))
+            self._sensor_bpm.set_value(fit_frame.get("heart_rate"))
+            self._sensor_rpm.set_value(fit_frame.get("cadence"))
+            self._sensor_elev.set_value(fit_frame.get("altitude"))
+
+    def _update_sensors_units(self):
+        self._sensor_speed.set_unit(self._state.fit.units.get("speed", ""))
+        self._sensor_bpm.set_unit(self._state.fit.units.get("heart_rate", ""))
+        self._sensor_rpm.set_unit(self._state.fit.units.get("cadence", ""))
+        self._sensor_elev.set_unit(self._state.fit.units.get("altitude", ""))
 
     def _duration_changed(self, v):
         self._seeker.setDisabled(False)

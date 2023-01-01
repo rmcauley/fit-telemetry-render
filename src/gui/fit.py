@@ -1,14 +1,13 @@
 import os
 import json
 
-from PySide6.QtCore import QStandardPaths, Slot
+from PySide6.QtCore import QStandardPaths
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
     QPushButton,
     QVBoxLayout,
     QHBoxLayout,
-    QLabel,
 )
 from PySide6.QtWebEngineWidgets import QWebEngineView
 
@@ -42,10 +41,6 @@ class FitLayout(QVBoxLayout):
         self._open_button.clicked.connect(self.open)
         tool_bar.addWidget(self._open_button)
 
-        self._offset = QLabel()
-        self._offset.setText("0")
-        tool_bar.addWidget(self._offset)
-
         self._state.fitOffsetChange.connect(self.show_offset)
         self._state.fitOffsetChange.connect(self.show_current)
         self._state.videoSecChange.connect(self.show_current)
@@ -65,8 +60,10 @@ class FitLayout(QVBoxLayout):
             fit_path = url.toLocalFile()
             if url.isLocalFile():
                 self._settings.setValue("fit_file_path", os.path.dirname(fit_path))
+
             self._state.fit_path = fit_path
             fit = get_fit_dict(fit_path)
+            self._state.fit_offset = 0
             self._state.fit = fit
 
             polyline = [
