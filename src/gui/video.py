@@ -1,4 +1,3 @@
-import os
 import sys
 from math import floor
 
@@ -6,20 +5,24 @@ from PySide6.QtCore import QStandardPaths, Qt, QSettings
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
-    QLabel,
     QSlider,
     QPushButton,
     QVBoxLayout,
     QHBoxLayout,
+    QLabel,
 )
 from PySide6.QtMultimedia import (
     QAudioOutput,
     QMediaFormat,
     QMediaPlayer,
+    QVideoFrame,
 )
 from PySide6.QtMultimediaWidgets import QVideoWidget
 
+from PIL import Image
+
 from state import GoProState
+from overlays.base import BaseOverlay
 
 from .sensor_label import SensorLabel
 
@@ -35,18 +38,25 @@ def get_supported_mime_types():
 
 
 class VideoLayout(QVBoxLayout):
+    _overlay: BaseOverlay
+
     def __init__(self, settings: QSettings, state: GoProState):
         super().__init__()
 
         self._settings = settings
         self._state = state
-        self._last_updated_pos = None
+        self._overlay = None
+        self._last_updated_pos = 0
 
         self._audio_output = QAudioOutput()
         self._audio_output.setMuted(True)
 
         self._video_widget = QVideoWidget()
         self.addWidget(self._video_widget, stretch=10)
+
+        self._preview_pixmap = QLabel()
+        self._preview_pixmap.hide()
+        self.addWidget(self._preview_pixmap, stretch=10)
 
         self._player = QMediaPlayer()
         self._player.setAudioOutput(self._audio_output)
@@ -82,6 +92,10 @@ class VideoLayout(QVBoxLayout):
         self._pause_action.clicked.connect(self._player.pause)
         tool_bar.addWidget(self._pause_action, stretch=0)
 
+        self._preview_check = QPushButton("Preview")
+        self._preview_check.clicked.connect(self._do_preview)
+        tool_bar.addWidget(self._preview_check)
+
         self._seeker = QSlider()
         self._seeker.setOrientation(Qt.Orientation.Horizontal)
         self._seeker.setMinimum(0)
@@ -95,6 +109,7 @@ class VideoLayout(QVBoxLayout):
         self.update_buttons(self._player.playbackState())
         self._mime_types = []
 
+        self._state.videoPathChange.connect(self._open_video)
         self._state.fitOffsetChange.connect(self._update_sensors)
         self._state.fitChange.connect(self._update_sensors_units)
 
@@ -128,11 +143,11 @@ class VideoLayout(QVBoxLayout):
             url = file_dialog.selectedUrls()[0]
             self._overlay = None
             if url.isLocalFile():
-                self._settings.setValue(
-                    "movie_file_path", os.path.dirname(url.toLocalFile())
-                )
-            self._player.setSource(url)
-            self._player.setPosition(0)
+                self._state.video_path = url.toLocalFile()
+
+    def _open_video(self):
+        self._player.setSource(self._state.video_path)
+        self._player.setPosition(0)
 
     def _ensure_stopped(self):
         if self._player.playbackState() != QMediaPlayer.PlaybackState.StoppedState:
@@ -141,6 +156,10 @@ class VideoLayout(QVBoxLayout):
     def update_buttons(self, state):
         self._play_action.setEnabled(state != QMediaPlayer.PlaybackState.PlayingState)
         self._pause_action.setEnabled(state == QMediaPlayer.PlaybackState.PlayingState)
+
+        if state == QMediaPlayer.PlaybackState.PlayingState:
+            self._preview_pixmap.hide()
+            self._video_widget.show()
 
     def show_status_message(self, message):
         pass
@@ -182,3 +201,32 @@ class VideoLayout(QVBoxLayout):
 
     def _seek(self, v):
         self._player.setPosition(v)
+
+    def _do_preview(self) -> None:
+        self._player.pause()
+        self._video_widget.hide()
+        self._preview_pixmap.show()
+
+        frame = self._video_widget.videoSink().videoFrame()
+
+        if (
+            not self._overlay
+            or self._overlay.w != frame.width()
+            or self._overlay.h != frame.height()
+        ):
+            self._overlay = self._state.overlay(frame.width(), frame.height())
+
+        fit_frame = (
+            self._state.fit.get(self._state.fit_offset + self._last_updated_pos, {})
+            if self._state.fit
+            else {}
+        )
+
+        pil_im = Image.fromqimage(frame.toImage())
+        pil_im.alpha_composite(self._overlay.overlay(fit_frame, self._state.fit))
+
+        w = self._preview_pixmap.width()
+        h = self._preview_pixmap.height()
+        self._preview_pixmap.setPixmap(
+            pil_im.toqpixmap().scaled(w, h, Qt.AspectRatioMode.KeepAspectRatio)
+        )

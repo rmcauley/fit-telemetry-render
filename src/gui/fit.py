@@ -44,6 +44,7 @@ class FitLayout(QVBoxLayout):
         self._state.fitOffsetChange.connect(self.show_offset)
         self._state.fitOffsetChange.connect(self.show_current)
         self._state.videoSecChange.connect(self.show_current)
+        self._state.fitChange.connect(self._on_fit_change)
 
     def open(self):
         file_dialog = QFileDialog(self.parentWidget(), filter="fit(*.fit)")
@@ -60,38 +61,36 @@ class FitLayout(QVBoxLayout):
             fit_path = url.toLocalFile()
             if url.isLocalFile():
                 self._settings.setValue("fit_file_path", os.path.dirname(fit_path))
-
             self._state.fit_path = fit_path
-            fit = get_fit_dict(fit_path)
-            self._state.fit_offset = 0
-            self._state.fit = fit
 
-            polyline = [
-                (d["position_lat"], d["position_long"])
-                for d in fit.values()
-                if "position_long" in d
-            ]
+    def _on_fit_change(self):
+        fit = self._state.fit
 
-            html = ""
-            with open(
-                os.path.join(os.path.dirname(os.path.realpath(__file__)), "fit.html"),
-                "r",
-            ) as file:
-                html = file.read()
+        polyline = [
+            (d["position_lat"], d["position_long"])
+            for d in fit.values()
+            if "position_long" in d
+        ]
 
-            html = html.replace("$minLat", str(fit.min_lat))
-            html = html.replace("$minLong", str(fit.min_long))
-            html = html.replace("$maxLat", str(fit.max_lat))
-            html = html.replace("$maxLong", str(fit.max_long))
-            html = html.replace("$polyline", json.dumps(polyline))
+        html = ""
+        with open(
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), "fit.html"),
+            "r",
+        ) as file:
+            html = file.read()
 
-            with open("blah.html", "w") as f:
-                f.write(html)
+        html = html.replace("$minLat", str(fit.min_lat))
+        html = html.replace("$minLong", str(fit.min_long))
+        html = html.replace("$maxLat", str(fit.max_lat))
+        html = html.replace("$maxLong", str(fit.max_long))
+        html = html.replace("$polyline", json.dumps(polyline))
 
-            self._web.setHtml(html)
+        with open("blah.html", "w") as f:
+            f.write(html)
 
-            # TODO: Match timestamp to video?
-            self._state.fit_offset = next(iter(fit.keys()), 0)
+        self._web.setHtml(html)
+
+        self._state.fit_offset = next(iter(fit.keys()), 0)
 
     def show_offset(self):
         if self._state.fit:

@@ -51,15 +51,40 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(central_widget)
 
+        self.show()
+
+        fit_path = self.settings.value("fit_path", "", str)
+        video_path = self.settings.value("video_path", "", str)
+        video_sec = self.settings.value("video_sec", 0, int)
+        fit_offset = self.settings.value("fit_offset", 0, int)
+        if fit_path and fit_path != "-1":
+            try:
+                self.state.fit_path = fit_path
+            except Exception as e:
+                print(e)
+                pass
+        if video_path and video_path != "-1":
+            self.state.video_path = video_path
+        if video_sec and video_sec != -1:
+            self.state.video_sec = video_sec
+        if fit_offset and fit_offset != -1:
+            self.state.video_path = fit_offset
+
     def closeEvent(self, e):
-        # Write window size and position to config file
         self.settings.setValue("size", self.size())
         self.settings.setValue("pos", self.pos())
+        if self.state.fit_path:
+            self.settings.setValue("fit_path", self.state.fit_path)
+        if self.state.video_path:
+            self.settings.setValue("video_path", self.state.video_path)
+        if self.state.fit_offset:
+            self.settings.setValue("fit_offset", self.state.fit_offset)
+        if self.state.video_sec:
+            self.settings.setValue("video_sec", self.state.video_sec)
 
         e.accept()
 
 
 app = QApplication(sys.argv)
 w = MainWindow()
-w.show()
 app.exec()
