@@ -15,7 +15,6 @@ from PySide6.QtMultimedia import (
     QAudioOutput,
     QMediaFormat,
     QMediaPlayer,
-    QVideoFrame,
 )
 from PySide6.QtMultimediaWidgets import QVideoWidget
 
@@ -92,9 +91,9 @@ class VideoLayout(QVBoxLayout):
         self._pause_action.clicked.connect(self._player.pause)
         tool_bar.addWidget(self._pause_action, stretch=0)
 
-        self._preview_check = QPushButton("Preview")
-        self._preview_check.clicked.connect(self._do_preview)
-        tool_bar.addWidget(self._preview_check)
+        # self._preview_check = QPushButton("Preview")
+        # self._preview_check.clicked.connect(self._do_preview)
+        # tool_bar.addWidget(self._preview_check)
 
         self._seeker = QSlider()
         self._seeker.setOrientation(Qt.Orientation.Horizontal)

@@ -1,7 +1,5 @@
 from PIL import Image, ImageDraw
 
-from fit import FitDict
-
 
 class BaseOverlay:
     _im: Image.Image
@@ -15,10 +13,10 @@ class BaseOverlay:
         self._im = Image.new("RGBA", (w, h))
         self._draw = ImageDraw.Draw(self._im)
 
-    def overlay(self, fit_frame: dict, fit: FitDict) -> Image.Image:
+    def overlay(self, fit_frame: dict, fit_units: dict) -> Image.Image:
         self._draw.rectangle((0, 0, self._im.width, self._im.height), fill=(0, 0, 0, 0))
-        self.draw(fit_frame, fit)
+        self.draw(fit_frame, fit_units)
         return self._im
 
-    def draw(self, fit_frame: dict, fit: FitDict) -> None:
+    def draw(self, fit_frame: dict, fit_units: dict) -> None:
         pass
