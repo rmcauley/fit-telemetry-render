@@ -85,9 +85,6 @@ class FitLayout(QVBoxLayout):
         html = html.replace("$maxLong", str(fit.max_long))
         html = html.replace("$polyline", json.dumps(polyline))
 
-        with open("blah.html", "w") as f:
-            f.write(html)
-
         self._web.setHtml(html)
 
         self._state.fit_offset = next(iter(fit.keys()), 0)
