@@ -35,7 +35,7 @@ def write_overlay_images(
     num_processes = 12
     queue = Queue()
 
-    for i in range(0, duration):
+    for i in range(0, duration + 1):
         queue.put((i, fit.get_point(i + state.fit_offset)))
 
     processes = []
