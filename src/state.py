@@ -52,7 +52,7 @@ class GoProState(QObject):
 
     @property
     def fit_path(self) -> str:
-        return self._fit_offset
+        return self._fit_path
 
     @fit_path.setter
     def fit_path(self, v: str) -> None:

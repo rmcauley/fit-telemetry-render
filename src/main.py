@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QSettings, QPoint, QSize
 
 from state import GoProState
-from gui.export import ExportWidget
+from gui.export import ExportLayout
 from gui.fit import FitLayout
 from gui.video import VideoLayout
 from gui.offset import OffsetLayout
@@ -42,8 +42,7 @@ class MainWindow(QMainWindow):
         offset_layout = OffsetLayout(self.settings, self.state)
         layout.addLayout(offset_layout, stretch=1)
 
-        export_layout = QHBoxLayout()
-        export_layout.addWidget(ExportWidget())
+        export_layout = ExportLayout(self.settings, self.state)
         layout.addLayout(export_layout, stretch=1)
 
         central_widget = QWidget()
@@ -60,6 +59,8 @@ class MainWindow(QMainWindow):
         if fit_path and fit_path != "-1":
             try:
                 self.state.fit_path = fit_path
+                if fit_offset and fit_offset != -1:
+                    self.state.fit_offset = fit_offset
             except Exception as e:
                 print(e)
                 pass
@@ -67,8 +68,6 @@ class MainWindow(QMainWindow):
             self.state.video_path = video_path
         if video_sec and video_sec != -1:
             self.state.video_sec = video_sec
-        if fit_offset and fit_offset != -1:
-            self.state.video_path = fit_offset
 
     def closeEvent(self, e):
         self.settings.setValue("size", self.size())
@@ -81,6 +80,8 @@ class MainWindow(QMainWindow):
             self.settings.setValue("fit_offset", self.state.fit_offset)
         if self.state.video_sec:
             self.settings.setValue("video_sec", self.state.video_sec)
+
+        self.settings.sync()
 
         e.accept()
 

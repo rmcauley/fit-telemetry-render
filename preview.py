@@ -71,7 +71,7 @@ class MainWindow(QMainWindow):
 
     def render_preview(self):
         pil_im = Image.open("preview.png").convert("RGBA")
-        o = overlay.DefaultOverlay(pil_im.width, pil_im.height).overlay(
+        o = overlay.DefaultOverlay(pil_im.width, pil_im.height, (0, 0, 0, 0)).overlay(
             fit_frame, fit_units
         )
         pil_im.alpha_composite(o)

@@ -2,3 +2,4 @@ av
 pillow
 pyside6
 folium
+ffmpeg-python

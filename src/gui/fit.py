@@ -14,7 +14,6 @@ from PySide6.QtWebEngineWidgets import QWebEngineView
 import folium
 
 from state import GoProState
-from fit import get_fit_dict
 
 
 class FitLayout(QVBoxLayout):

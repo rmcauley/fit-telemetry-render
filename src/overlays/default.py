@@ -77,7 +77,9 @@ class DefaultOverlay(BaseOverlay):
         y = self.h - self.sensor_block_h
 
         if "speed" in fit_frame:
-            self.sensor_block(x, y, fit_units["speed"].upper(), fit_frame["speed"])
+            self.sensor_block(
+                x, y, fit_units["speed"].upper(), round(fit_frame["speed"])
+            )
             x += self.sensor_block_w + self.sensor_block_pad
         if "heart_rate" in fit_frame:
             self.sensor_hr(x, y, fit_frame["heart_rate"])
@@ -123,7 +125,7 @@ class DefaultOverlay(BaseOverlay):
         )
 
     def sensor_v(self, x, y, v):
-        font = font or self.font_l
+        font = self.font_l
         if isinstance(v, int) and (v > 1000 or v < -99):
             font = self.font_m
         elif isinstance(v, str) and len(v) > 3:
@@ -144,7 +146,6 @@ class DefaultOverlay(BaseOverlay):
 
     def sensor_hr(self, x, y, v):
         for hr in hr_zones:
-            print(hr)
             if v >= hr[0]:
                 self.sensor_rect(x, y, hr[1])
                 break

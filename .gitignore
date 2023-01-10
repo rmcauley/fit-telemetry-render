@@ -137,5 +137,9 @@ merge.mp4
 /bin
 /doc
 /presets
+/ffmpeg
 
 preview.png
+overlay.mp4
+merge.mp4
+concat.txt
