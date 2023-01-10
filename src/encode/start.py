@@ -6,8 +6,8 @@ from PySide6.QtWidgets import QProgressDialog, QWidget
 from state import GoProState
 
 from .movie import get_movies
-from .overlay import encode_overlay
-from .final import encode_final
+from .overlay import write_overlay_images
+from .final import encode_final_png
 from .concat import concat
 
 
@@ -16,14 +16,11 @@ def start_encode(parent: QWidget, state: GoProState, out: str) -> None:
     progress.setWindowModality(Qt.WindowModal)
 
     movie_files = get_movies(state.video_path)
+
     duration = sum(m.length for m in movie_files)
     progress.setMaximum(duration)
 
-    overlay_location = os.path.join(".", "overlay.mp4")
-
-    encode_overlay(
-        overlay_location,
-        movie_files[0].pix_fmt,
+    write_overlay_images(
         movie_files[0].width,
         movie_files[0].height,
         state,
@@ -37,4 +34,4 @@ def start_encode(parent: QWidget, state: GoProState, out: str) -> None:
     if len(movie_files) > 1:
         input_location = concat(movie_files)
 
-    encode_final(input_location, movie_files, out, overlay_location)
+    encode_final_png(input_location, movie_files, out)

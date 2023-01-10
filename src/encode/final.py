@@ -5,10 +5,9 @@ import ffmpeg
 
 from .movie import Movie
 from .consts import NVIDIA_MAX_BITRATE
-from .ffmpeg import get_ffmpeg_bin
 
 
-def encode_final(input_file: str, movie_files: List[Movie], out: str, overlay: str):
+def encode_final_png(input_file: str, movie_files: List[Movie], out: str):
     total_length = int(sum(m.length for m in movie_files))
     total_size_mb = int(sum(m.size for m in movie_files) / 1024 / 1024)
     total_size_gb = int(total_size_mb / 1024)
@@ -21,12 +20,8 @@ def encode_final(input_file: str, movie_files: List[Movie], out: str, overlay: s
     buf_size = avg_rate * 2
 
     input_stream = ffmpeg.input(input_file)
-    overlay_stream = ffmpeg.input(overlay)
-    overlay_stream = ffmpeg.filter(
-        overlay_stream,
-        "chromakey",
-        color="0xFF00FF",
-        similarity="0.2",
+    overlay_stream = ffmpeg.input(
+        os.path.join(".", "png", r"fit-%05d.png"), framerate="1", thread_queue_size="32"
     )
     overlaid_stream = ffmpeg.overlay(input_stream, overlay_stream, eof_action="pass")
     overlaid_stream = overlaid_stream.output(
@@ -41,7 +36,7 @@ def encode_final(input_file: str, movie_files: List[Movie], out: str, overlay: s
             "maxrate:v": f"{max_rate}K",
             "bufsize:v": f"{buf_size}K",
             "c:a": "copy",
-            # "movflags": "+faststart",
+            "movflags": "+faststart",
             "f": "mp4",
             "y": None,
         },

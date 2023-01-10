@@ -1,37 +1,50 @@
-import av
+import os
+import queue
+from time import sleep
+from multiprocessing import Queue, Process, connection
 
 from PySide6.QtWidgets import QProgressDialog
 
 from state import GoProState
+from overlays.default import DefaultOverlay
 
 
-def encode_overlay(
-    out: str,
-    pix_fmt: str,
+def write_png(q, w, h, fit_units):
+    overlay = DefaultOverlay(w, h)
+    try:
+        while frame := q.get(block=True, timeout=3):
+            (second, fit_frame) = frame
+            print(second)
+            second_leading = "{:0>5}".format(second)
+            overlay.overlay(fit_frame, fit_units).save(
+                os.path.join(".", "png", f"fit-{second_leading}.png"),
+            )
+    except queue.Empty as e:
+        pass
+    print("process done")
+
+
+def write_overlay_images(
     w: int,
     h: int,
     state: GoProState,
     progress: QProgressDialog,
     duration: int,
 ):
-    output = av.open(out, "w")
-    output_stream_v = output.add_stream(av.Codec("libx264", mode="w"), 1.0)
-    output_stream_v.options = {"crf": "0"}
-    output_stream_v.pix_fmt = "yuv444p"
-    output_stream_v.width = w
-    output_stream_v.height = h
-
-    pts = 0
     fit = state.fit
-    fit_units = state.fit.units
-    overlay = state.overlay(w, h)
-    while pts <= duration and (fit_frame := fit.get_point(pts + state.fit_offset)):
-        pts += 1
+    num_processes = 12
+    queue = Queue()
 
-        packet = output_stream_v.encode(
-            av.VideoFrame.from_image(overlay.overlay(fit_frame, fit_units))
-        )
-        output.mux(packet)
-        progress.setValue(pts)
+    for i in range(0, duration):
+        queue.put((i, fit.get_point(i + state.fit_offset)))
 
-    output.close()
+    processes = []
+    for i in range(0, num_processes):
+        p = Process(target=write_png, args=(queue, w, h, state.fit.units))
+        p.start()
+        processes.append(p)
+
+    for p in processes:
+        p.join()
+
+    print("ok bye")

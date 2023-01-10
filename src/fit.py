@@ -27,12 +27,9 @@ class FitDict(OrderedDict):
 
     def get_point(self, second: int) -> dict:
         d = None
-        attempts = 0
-        while d is None:
-            d = self.get(second - attempts, None)
-            attempts += 1
-            if attempts > 5:
-                break
+        while d is None and second >= 0:
+            d = self.get(second, None)
+            second -= 1
         return d
 
 

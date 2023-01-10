@@ -20,6 +20,7 @@ def concat(movie_files: List[Movie]) -> str:
         "-safe 0",
         f"-i {concat_path}",
         "-c copy",
+        "-y",
         out_path,
     ]
 

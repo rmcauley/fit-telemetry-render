@@ -46,7 +46,8 @@ class Movie:
 
 def get_movies(video_path: str) -> List[Movie]:
     ingest_path = os.path.dirname(video_path)
-    gopro_match = re.match(GOPRO_FILENAME_REGEX, video_path)
+    video_filename = video_path[len(ingest_path) + 1 :]
+    gopro_match = re.match(GOPRO_FILENAME_REGEX, video_filename)
     movie_files = []
     if gopro_match and gopro_match[1] == "01":
         gopro_id = gopro_match[2]
@@ -60,6 +61,7 @@ def get_movies(video_path: str) -> List[Movie]:
             statinfo = os.stat(filename_with_path)
             if S_ISREG(statinfo[ST_MODE]):
                 movie_files.append(Movie(filename_with_path, statinfo))
+            chain_index += 1
         movie_files.sort(key=lambda m: m.to_sortable())
     else:
         statinfo = os.stat(video_path)
