@@ -1,5 +1,4 @@
 import sys
-import logging
 
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -10,24 +9,22 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QSettings, QPoint, QSize
 
-from state import GoProState
+from state import AppState
 from gui.export import ExportLayout
 from gui.fit import FitLayout
 from gui.video import VideoLayout
 from gui.offset import OffsetLayout
-
-# removes warning: deprecated pixel format used
-logging.getLogger("libav").setLevel(logging.ERROR)
+from encode.start import start_encode
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, state: AppState):
         super().__init__()
 
-        self.setWindowTitle("GoPro Telemetry")
+        self.setWindowTitle("FIT Telemetry Overlay")
 
         self.settings = QSettings("rmcauley", "GoPro Telemetry")
-        self.state = GoProState()
+        self.state = state
 
         self.resize(self.settings.value("size", QSize(270, 225)))
         self.move(self.settings.value("pos", QPoint(50, 50)))
@@ -58,28 +55,29 @@ class MainWindow(QMainWindow):
         fit_offset = self.settings.value("fit_offset", 0, int)
         if fit_path and fit_path != "-1":
             try:
-                self.state.fit_path = fit_path
+                state.fit_path = fit_path
                 if fit_offset and fit_offset != -1:
-                    self.state.fit_offset = fit_offset
+                    state.fit_offset = fit_offset
             except Exception as e:
                 print(e)
                 pass
         if video_path and video_path != "-1":
-            self.state.video_path = video_path
+            state.video_path = video_path
         if video_sec and video_sec != -1:
-            self.state.video_sec = video_sec
+            state.video_sec = video_sec
 
     def closeEvent(self, e):
         self.settings.setValue("size", self.size())
         self.settings.setValue("pos", self.pos())
-        if self.state.fit_path:
-            self.settings.setValue("fit_path", self.state.fit_path)
-        if self.state.video_path:
-            self.settings.setValue("video_path", self.state.video_path)
-        if self.state.fit_offset:
-            self.settings.setValue("fit_offset", self.state.fit_offset)
-        if self.state.video_sec:
-            self.settings.setValue("video_sec", self.state.video_sec)
+
+        if state.fit_path:
+            self.settings.setValue("fit_path", state.fit_path)
+        if state.video_path:
+            self.settings.setValue("video_path", state.video_path)
+        if state.fit_offset:
+            self.settings.setValue("fit_offset", state.fit_offset)
+        if state.video_sec:
+            self.settings.setValue("video_sec", state.video_sec)
 
         self.settings.sync()
 
@@ -87,6 +85,10 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == "__main__":
+    state = AppState()
     app = QApplication(sys.argv)
-    w = MainWindow()
+    w = MainWindow(state)
     app.exec()
+
+    if state.export_path:
+        start_encode(state)

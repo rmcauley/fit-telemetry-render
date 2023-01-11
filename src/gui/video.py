@@ -9,7 +9,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QHBoxLayout,
-    QLabel,
 )
 from PySide6.QtMultimedia import (
     QAudioOutput,
@@ -18,9 +17,7 @@ from PySide6.QtMultimedia import (
 )
 from PySide6.QtMultimediaWidgets import QVideoWidget
 
-from PIL import Image
-
-from state import GoProState
+from state import AppState
 from overlays.base import BaseOverlay
 
 from .sensor_label import SensorLabel
@@ -39,7 +36,7 @@ def get_supported_mime_types():
 class VideoLayout(QVBoxLayout):
     _overlay: BaseOverlay
 
-    def __init__(self, settings: QSettings, state: GoProState):
+    def __init__(self, settings: QSettings, state: AppState):
         super().__init__()
 
         self._settings = settings
@@ -52,10 +49,6 @@ class VideoLayout(QVBoxLayout):
 
         self._video_widget = QVideoWidget()
         self.addWidget(self._video_widget, stretch=10)
-
-        self._preview_pixmap = QLabel()
-        self._preview_pixmap.hide()
-        self.addWidget(self._preview_pixmap, stretch=10)
 
         self._player = QMediaPlayer()
         self._player.setAudioOutput(self._audio_output)
@@ -90,10 +83,6 @@ class VideoLayout(QVBoxLayout):
         self._pause_action = QPushButton("Pause")
         self._pause_action.clicked.connect(self._player.pause)
         tool_bar.addWidget(self._pause_action, stretch=0)
-
-        # self._preview_check = QPushButton("Preview")
-        # self._preview_check.clicked.connect(self._do_preview)
-        # tool_bar.addWidget(self._preview_check)
 
         self._seeker = QSlider()
         self._seeker.setOrientation(Qt.Orientation.Horizontal)
@@ -156,10 +145,6 @@ class VideoLayout(QVBoxLayout):
         self._play_action.setEnabled(state != QMediaPlayer.PlaybackState.PlayingState)
         self._pause_action.setEnabled(state == QMediaPlayer.PlaybackState.PlayingState)
 
-        if state == QMediaPlayer.PlaybackState.PlayingState:
-            self._preview_pixmap.hide()
-            self._video_widget.show()
-
     def show_status_message(self, message):
         pass
         # self.statusBar().showMessage(message, 5000)
@@ -200,32 +185,3 @@ class VideoLayout(QVBoxLayout):
 
     def _seek(self, v):
         self._player.setPosition(v)
-
-    def _do_preview(self) -> None:
-        self._player.pause()
-        self._video_widget.hide()
-        self._preview_pixmap.show()
-
-        frame = self._video_widget.videoSink().videoFrame()
-
-        if (
-            not self._overlay
-            or self._overlay.w != frame.width()
-            or self._overlay.h != frame.height()
-        ):
-            self._overlay = self._state.overlay(frame.width(), frame.height())
-
-        fit_frame = (
-            self._state.fit.get(self._state.fit_offset + self._last_updated_pos, {})
-            if self._state.fit
-            else {}
-        )
-
-        pil_im = Image.fromqimage(frame.toImage())
-        pil_im.alpha_composite(self._overlay.overlay(fit_frame, self._state.fit))
-
-        w = self._preview_pixmap.width()
-        h = self._preview_pixmap.height()
-        self._preview_pixmap.setPixmap(
-            pil_im.toqpixmap().scaled(w, h, Qt.AspectRatioMode.KeepAspectRatio)
-        )

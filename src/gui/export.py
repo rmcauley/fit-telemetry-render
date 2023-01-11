@@ -1,21 +1,18 @@
-import os
-
 from PySide6.QtCore import QStandardPaths
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QFileDialog,
     QDialog,
+    QApplication,
 )
-from state import GoProState
-
-from encode.start import start_encode
+from state import AppState
 
 
 class ExportLayout(QHBoxLayout):
-    _state: GoProState
+    _state: AppState
 
-    def __init__(self, settings, state: GoProState):
+    def __init__(self, settings, state: AppState):
         super().__init__()
 
         self._settings = settings
@@ -37,5 +34,8 @@ class ExportLayout(QHBoxLayout):
         file_dialog.setDirectory(out_location)
         if file_dialog.exec() == QDialog.DialogCode.Accepted:
             url = file_dialog.selectedUrls()[0]
-            export_location = url.toLocalFile()
-            start_encode(self.parentWidget(), self._state, export_location)
+            self._state.export_path = url.toLocalFile()
+            for window in QApplication.topLevelWidgets():
+                window.close()
+        else:
+            self._state.export_path = None

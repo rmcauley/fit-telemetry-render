@@ -12,4 +12,7 @@ Please wait
 
 ## Known Issues
 
-Please wait
+- No status bar for video / video errors
+- Video does not reliably render after open or after seek
+- Offset bar does not return to previously saved position on reload
+- Audio is not copied to final movie file

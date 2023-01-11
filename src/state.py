@@ -1,19 +1,18 @@
-from collections import OrderedDict
-
 from PySide6.QtCore import QObject, Signal
 
-from fit import FitDict, get_fit_dict
+from fit import FitFile, get_fit_dict
 
 from overlays.base import BaseOverlay
 from overlays.default import DefaultOverlay
 
 
-class GoProState(QObject):
+class AppState(QObject):
     _video_path: str
     _video_sec: int
     _fit_path: str
-    _fit: FitDict
+    _fit: FitFile
     _fit_offset: int
+    export_path: str
 
     overlay: BaseOverlay = DefaultOverlay
 
@@ -31,6 +30,7 @@ class GoProState(QObject):
         self._fit = None
         self._fit_offset = 0
         self._video_sec = 0
+        self.export_path = None
 
     @property
     def video_path(self) -> str:
@@ -59,7 +59,6 @@ class GoProState(QObject):
         fit = get_fit_dict(v)
         self._fit_path = v
         self.fit = fit
-        # Match timestamp to video?
         self.fitPathChange.emit()
 
     @property
@@ -71,18 +70,12 @@ class GoProState(QObject):
         self._fit_offset = v
         self.fitOffsetChange.emit()
 
-    def load_set_fit(self, fit_path: str) -> FitDict:
-        fit = get_fit_dict(fit_path)
-        self.fit_offset = 0
-        self.fit = fit
-        return fit
-
     @property
-    def fit(self) -> FitDict:
+    def fit(self) -> FitFile:
         return self._fit
 
     @fit.setter
-    def fit(self, v: FitDict):
+    def fit(self, v: FitFile):
         if self._fit:
             self._fit.close()
         self._fit = v

@@ -1,9 +1,7 @@
-from collections import OrderedDict
-
 import fitdecode
 
 
-class FitDict(OrderedDict):
+class FitFile(dict):
     units: dict
     min_lat: int
     min_long: int
@@ -22,19 +20,17 @@ class FitDict(OrderedDict):
         self.mid_long = 0
         super().__init__(*args, **kwargs)
 
-    def set_unit(self, key: str, unit: str) -> None:
-        self.units[key] = unit
-
     def get_point(self, second: int) -> dict:
         d = None
         while d is None and second >= 0:
             d = self.get(second, None)
             second -= 1
-        return d
+        return d or {}
 
 
-def get_fit_dict(path: str) -> FitDict:
-    fitted = FitDict()
+def get_fit_dict(path: str) -> FitFile:
+    fitted = FitFile()
+    duration = 0
 
     with fitdecode.FitReader(path) as fit:
         time_created = 0
@@ -53,22 +49,21 @@ def get_fit_dict(path: str) -> FitDict:
                             "rear_gear_num": frame.get_value("rear_gear_num"),
                         }
                     )
-                    fitted[
-                        round(
-                            (
-                                frame_values.get("timestamp", time_created)
-                                - time_created
-                            ).total_seconds()
-                        )
-                    ] = frame_values.copy()
+                    second = round(
+                        (
+                            frame_values.get("timestamp", time_created) - time_created
+                        ).total_seconds()
+                    )
+                    fitted[second] = frame_values.copy()
+                    duration = max(duration, second)
             elif frame.frame_type == 4 and frame.name == "record":
                 for f in frame.fields:
                     if f.field_def and f.value is not None:
                         if f.units:
                             if f.field_def.name == "speed" and f.units == "m/s":
                                 f.units = "km/h"
-                                f.value = round(f.value * 3.6, 2)
-                            fitted.set_unit(f.field_def.name, f.units)
+                                f.value = round(f.value * 3.6)
+                            fitted.units[f.field_def.name] = f.units
 
                         if f.field_def.name == "position_long":
                             f.value = f.value / 11930465
@@ -83,13 +78,18 @@ def get_fit_dict(path: str) -> FitDict:
                             if f.value > fitted.max_lat:
                                 fitted.max_lat = f.value
                         frame_values[f.field_def.name] = f.value
-                fitted[
-                    round(
-                        (
-                            frame_values.get("timestamp", time_created) - time_created
-                        ).total_seconds()
-                    )
-                ] = frame_values.copy()
+                second = round(
+                    (
+                        frame_values.get("timestamp", time_created) - time_created
+                    ).total_seconds()
+                )
+                fitted[second] = frame_values.copy()
+                duration = max(duration, second)
+
+    # fill gaps in keys
+    for i in range(duration):
+        if not fitted.get(i, None):
+            fitted[i] = fitted.get_point(i)
 
     fitted.min_lat = (fitted.max_lat + fitted.min_lat) / 2
     fitted.mid_long = (fitted.max_long + fitted.min_long) / 2

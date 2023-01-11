@@ -11,21 +11,17 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtWebEngineWidgets import QWebEngineView
 
-import folium
-
-from state import GoProState
+from state import AppState
 
 
 class FitLayout(QVBoxLayout):
-    _state: GoProState
+    _state: AppState
 
-    def __init__(self, settings, state: GoProState):
+    def __init__(self, settings, state: AppState):
         super().__init__()
 
         self._settings = settings
         self._state = state
-
-        self._row_to_second = {}
 
         self._web = QWebEngineView()
         self._web.setHtml("")
@@ -44,6 +40,9 @@ class FitLayout(QVBoxLayout):
         self._state.fitOffsetChange.connect(self.show_current)
         self._state.videoSecChange.connect(self.show_current)
         self._state.fitChange.connect(self._on_fit_change)
+
+        if self._state.fit:
+            self._on_fit_change()
 
     def open(self):
         file_dialog = QFileDialog(self.parentWidget(), filter="fit(*.fit)")
@@ -66,9 +65,9 @@ class FitLayout(QVBoxLayout):
         fit = self._state.fit
 
         polyline = [
-            (d["position_lat"], d["position_long"])
-            for d in fit.values()
-            if "position_long" in d
+            (fit[key]["position_lat"], fit[key]["position_long"])
+            for key in sorted(fit.keys())
+            if "position_long" in fit[key]
         ]
 
         html = ""
@@ -85,8 +84,6 @@ class FitLayout(QVBoxLayout):
         html = html.replace("$polyline", json.dumps(polyline))
 
         self._web.setHtml(html)
-
-        self._state.fit_offset = next(iter(fit.keys()), 0)
 
     def show_offset(self):
         if self._state.fit:
@@ -107,6 +104,9 @@ class FitLayout(QVBoxLayout):
                 self._web.page().runJavaScript(f"setCurrentPoint({lat}, {long})")
 
     def generate_folium_html(self):
+        # Used to generate a new fit.html.  foliumn is not part of the requirements.
+        import folium
+
         fit = self._state.fit
         fol = folium.Map()
         fol.fit_bounds(

@@ -1,27 +1,21 @@
 import os
-from typing import List
 
 import ffmpeg
 
-from .movie import Movie
-from .consts import NVIDIA_MAX_BITRATE
+NVIDIA_MAX_BITRATE = 60000
 
 
-def encode_final_png(input_file: str, movie_files: List[Movie], out: str):
-    total_length = int(sum(m.length for m in movie_files))
-    total_size_mb = int(sum(m.size for m in movie_files) / 1024 / 1024)
-    total_size_gb = int(total_size_mb / 1024)
-
-    max_rate = NVIDIA_MAX_BITRATE
-    if total_size_gb > 125:
-        max_rate = min(NVIDIA_MAX_BITRATE, int(((125000 * 8192) / total_length) - 128))
-
+def encode_final(input_file: str, out: str, tempdir: str):
+    duration = round(float(ffmpeg.probe(input_file)["streams"][0]["duration"]))
+    max_rate = min(NVIDIA_MAX_BITRATE, int(((125000 * 8192) / duration) - 128))
     avg_rate = int(max_rate * 0.9)
     buf_size = avg_rate * 2
 
     input_stream = ffmpeg.input(input_file)
     overlay_stream = ffmpeg.input(
-        os.path.join(".", "png", r"fit-%05d.png"), framerate="1", thread_queue_size="32"
+        os.path.join(tempdir, r"fit-%05d.png"),
+        framerate="1",
+        thread_queue_size="32",
     )
     overlaid_stream = ffmpeg.overlay(input_stream, overlay_stream, eof_action="pass")
     overlaid_stream = overlaid_stream.output(
@@ -39,7 +33,7 @@ def encode_final_png(input_file: str, movie_files: List[Movie], out: str):
             "movflags": "+faststart",
             "f": "mp4",
             "y": None,
+            "hide_banner": None,
         },
     )
-    print(ffmpeg.get_args(overlaid_stream))
     overlaid_stream.run()

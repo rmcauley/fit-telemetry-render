@@ -1,0 +1,2 @@
+file 'E:/GoPro/in/Santiago del Teide Descent\GX010026.mp4'
+file 'E:/GoPro/in/Santiago del Teide Descent\GX020026.mp4'

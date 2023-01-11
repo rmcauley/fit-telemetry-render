@@ -128,19 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# GoPro joiner directories
-/in
-in.txt
-merge.mp4
-
-# ffmpeg directories
-/bin
-/doc
-/presets
-/ffmpeg
-
-preview.png
-overlay.mp4
-merge.mp4
-concat.txt
-png
+/preview.png
+/.temp*

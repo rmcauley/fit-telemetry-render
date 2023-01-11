@@ -3,13 +3,13 @@ from PySide6.QtWidgets import (
     QSlider,
     QHBoxLayout,
 )
-from state import GoProState
+from state import AppState
 
 
 class OffsetLayout(QHBoxLayout):
-    _state: GoProState
+    _state: AppState
 
-    def __init__(self, settings, state: GoProState):
+    def __init__(self, settings, state: AppState):
         super().__init__()
 
         self._settings = settings
