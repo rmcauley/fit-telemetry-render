@@ -6,11 +6,13 @@ from multiprocessing import Queue, Process, cpu_count
 import ffmpeg
 
 from state import AppState
-from overlays.default import DefaultOverlay
+from overlays.base import BaseOverlay
 
 
-def write_png(tempdir: str, q: Queue, w: int, h: int, fit_units: dict):
-    overlay = DefaultOverlay(w, h)
+def write_png(
+    overlay_class: BaseOverlay, tempdir: str, q: Queue, w: int, h: int, fit_units: dict
+):
+    overlay = overlay_class(w, h)
     try:
         while frame := q.get(block=True, timeout=3):
             (second, fit_frame) = frame
@@ -41,7 +43,10 @@ def write_overlay_images(
 
     processes = []
     for i in range(0, num_processes):
-        p = Process(target=write_png, args=(tempdir, queue, w, h, state.fit.units))
+        p = Process(
+            target=write_png,
+            args=(state.overlay, tempdir, queue, w, h, state.fit.units),
+        )
         p.start()
         processes.append(p)
 

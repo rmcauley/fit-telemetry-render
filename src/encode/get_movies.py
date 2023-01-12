@@ -22,5 +22,7 @@ def get_movies(video_path: str) -> List[str]:
                 break
             movie_files.append(filename_with_path)
             chain_index += 1
+    else:
+        movie_files.append(video_path)
 
     return movie_files

@@ -11,21 +11,27 @@ def encode_final(input_file: str, out: str, tempdir: str):
     avg_rate = int(max_rate * 0.9)
     buf_size = avg_rate * 2
 
-    input_stream = ffmpeg.input(input_file)
+    input_audio_stream = ffmpeg.input(input_file).audio
+    input_video_stream = ffmpeg.input(input_file).video
     overlay_stream = ffmpeg.input(
         os.path.join(tempdir, r"fit-%05d.png"),
         framerate="1",
         thread_queue_size="32",
     )
-    overlaid_stream = ffmpeg.overlay(input_stream, overlay_stream, eof_action="pass")
-    overlaid_stream = overlaid_stream.output(
+    overlaid_stream = ffmpeg.overlay(
+        input_video_stream, overlay_stream, eof_action="pass"
+    )
+    runner = ffmpeg.output(
+        input_audio_stream,
+        overlaid_stream,
         out,
         **{
             "c:v": "hevc_nvenc",
             "preset": "medium",
-            "rc-lookahead:v": "32",
+            "rc-lookahead:v": "16",
             "b_ref_mode:v": "middle",
             "temporal-aq:v": "1",
+            "spatial-aq:v": "1",
             "b:v": f"{avg_rate}K",
             "maxrate:v": f"{max_rate}K",
             "bufsize:v": f"{buf_size}K",
@@ -36,4 +42,4 @@ def encode_final(input_file: str, out: str, tempdir: str):
             "hide_banner": None,
         },
     )
-    overlaid_stream.run()
+    runner.run()
