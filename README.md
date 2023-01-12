@@ -1,26 +1,33 @@
-# GoPro Joiner
-Joins GoPro videos together for Youtube uploading.
+# FIT Render
 
-I often take long bike rides and record them to share with friends via YouTube.  This tool has saved me a lot of time in putting them together.
-
-## Usage
-
-- Have Python (3.6+) installed and ready to use
-- Place `ffmpeg` and `ffprobe` into a `bin` directory underneath gopro.py
-- Place your movie files into an `in` directory underneath gopro.py
-- Run the script
-- Your file ready for Youtube will be available in `merge.mp4`
+Renders .FIT data on top of video files, with special care for GoPro videos meant for uploading to YouTube.
 
 ## What it Does
 
-- Re-encodes to fit under Youtube's 128GB file size limit if necessary
-- Re-encodes to flip any sections of upside-down video from e.g. handlebar mounts if multiple rotations are detected
-- If not necessary, merges all files together without re-encoding
+- Renders speed, cadence, heartrate, Di2, and altitude on top of videos
+- Automatically merges GoPro segmented files together
+- Ensures videos fit within YouTube's 128GB file size limit
+
+## Prerequisites
+
+- Install `ffmpeg` on PATH
+- Install Python modules in `requirements.txt`
+
+## How To
+
+The app needs to be run in a terminal, as the export process has no GUI.
+
+1. Open a fit file
+2. Open your video, or the first GoPro video in the chain (`GX01#####.mp4`)
+3. Find a recognizable spot in the video using the seek bar that was along your route (intersections work well)
+4. Align the semi-transparent mark on the map with the location your video is at, using the larger seek bar at the bottom
+5. Export
 
 ## Known Issues
 
-- Only encodes using nVidia HEVC and decodes using nVidia HW
-- Not tested on Linux
-- Does not support ffmpeg existing on the path
-- All input files must be from the same GoPro size, framerate, and encoder settings
-- Undiagnosed, but certain combinations of files will not concatenate and must be re-encoded manually
+- If you use h265 encoding on GoPro and are on Windows, you will need to purchase the HEVC Media Extensions on the Microsoft store
+- No manual timer input for video if you want to avoid HEVC Media Extension by using an external app
+- No loading indicator when loading FIT files (app will appear frozen)
+- No status bar for video / video errors
+- Video does not render preview immediately after opening
+- FIT+Video offset bar does not return to previously saved position on app reload
