@@ -31,10 +31,11 @@ class AppState(QObject):
     fitPathChange = Signal(str)
     exportPathChange = Signal(str)
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, parent, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         self._settings = QSettings("rmcauley", "fitrender")
+        self._parent = parent
 
         self.fit = None
         self.export_path = None
@@ -204,7 +205,7 @@ class AppState(QObject):
         self.exportPathChange.emit(v)
 
     def open_fit_dialog(self):
-        file_dialog = QFileDialog(self.parentWidget(), filter="fit(*.fit)")
+        file_dialog = QFileDialog(self._parent, filter="fit(*.fit)")
         file_dialog.setDirectory(self.fit_dialog_path)
         if file_dialog.exec() == QDialog.DialogCode.Accepted:
             url = file_dialog.selectedUrls()[0]
@@ -214,7 +215,7 @@ class AppState(QObject):
             self.fit_path = fit_path
 
     def open_export_dialog(self):
-        file_dialog = QFileDialog(self.parentWidget(), filter="mp4(*.mp4)")
+        file_dialog = QFileDialog(self._parent, filter="mp4(*.mp4)")
         file_dialog.setDirectory(self.video_export_dialog_path)
         if file_dialog.exec() == QDialog.DialogCode.Accepted:
             self.export_path = file_dialog.selectedUrls()[0].toLocalFile()
@@ -222,7 +223,7 @@ class AppState(QObject):
             self.export_path = None
 
     def open_video_dialog(self):
-        file_dialog = QFileDialog(self.parentWidget())
+        file_dialog = QFileDialog(self._parent)
 
         if not self._mime_types:
             self._mime_types = get_supported_mime_types()
