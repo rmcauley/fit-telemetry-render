@@ -12,33 +12,6 @@ draw_keys = [
     "heart_rate",
 ]
 
-rear_gears = [
-    "11",
-    "12",
-    "13",
-    "14",
-    "15",
-    "17",
-    "19",
-    "21",
-    "24",
-    "27",
-    "30",
-    "34",
-    "",
-]
-rear_gears.reverse()
-front_gears = ["", "34", "50"]
-
-hr_zones = [
-    (-1, (0, 86, 147, 255)),
-    (134, (0, 100, 0, 255)),
-    (149, (100, 77, 0, 255)),
-    (164, (100, 0, 0, 255)),
-    (173, (100, 0, 100, 255)),
-]
-hr_zones.reverse()
-
 grades = [
     (-100, (64, 64, 64, 255)),
     (3, (0, 100, 0, 255)),
@@ -76,35 +49,56 @@ class DefaultOverlay(BaseOverlay):
         x = (self.w / 2) - (width / 2)
         y = self.h - self.sensor_block_h
 
-        if "speed" in fit_frame:
-            self.sensor_block(
-                x, y, fit_units["speed"].upper(), round(fit_frame["speed"])
-            )
-            x += self.sensor_block_w + self.sensor_block_pad
-        if "heart_rate" in fit_frame:
-            self.sensor_hr(x, y, fit_frame["heart_rate"])
-            x += self.sensor_block_w + self.sensor_block_pad
-        if "cadence" in fit_frame:
-            self.sensor_block(x, y, fit_units["cadence"].upper(), fit_frame["cadence"])
-            x += self.sensor_block_w + self.sensor_block_pad
-        if "grade" in fit_frame:
-            self.sensor_grade(x, y, fit_frame["grade"])
-            x += self.sensor_block_w + self.sensor_block_pad
-        if "front_gear_num" in fit_frame:
+        if "speed" in fit_units:
             self.sensor_block(
                 x,
                 y,
-                "FRONT GEAR",
-                front_gears[round(fit_frame["front_gear_num"])] + "T",
+                fit_units["speed"].upper(),
+                round(fit_frame["speed"]) if "speed" in fit_frame else "-",
             )
             x += self.sensor_block_w + self.sensor_block_pad
-        if "rear_gear_num" in fit_frame:
+        if "heart_rate" in fit_units:
+            self.sensor_hr(x, y, fit_frame.get("heart_rate", "-"))
+            x += self.sensor_block_w + self.sensor_block_pad
+        if "cadence" in fit_units:
             self.sensor_block(
-                x, y, "REAR GEAR", rear_gears[round(fit_frame["rear_gear_num"])] + "T"
+                x, y, fit_units["cadence"].upper(), fit_frame.get("cadence", "-")
             )
             x += self.sensor_block_w + self.sensor_block_pad
-        if "altitude" in fit_frame:
-            self.sensor_block(x, y, "ALTITUDE", round(fit_frame["altitude"]))
+        if "grade" in fit_units:
+            self.sensor_grade(x, y, fit_frame.get("grade", "-"))
+            x += self.sensor_block_w + self.sensor_block_pad
+        if "front_gear_num" in fit_units:
+            front_gear = "-"
+            if "front_gear_num" in fit_frame:
+                front_gear = "#" + fit_frame["front_gear_num"]
+                try:
+                    front_gear = (
+                        self.state.front_gears[round(fit_frame["front_gear_num"])] + "T"
+                    )
+                except ValueError:
+                    pass
+            self.sensor_block(x, y, "FRONT GEAR", front_gear)
+            x += self.sensor_block_w + self.sensor_block_pad
+        if "rear_gear_num" in fit_units:
+            rear_gear = "-"
+            if "rear_gear_num" in fit_frame:
+                rear_gear = "#" + fit_frame["rear_gear_num"]
+                try:
+                    rear_gear = (
+                        self.state.rear_gears[round(fit_frame["rear_gear_num"])] + "T"
+                    )
+                except ValueError:
+                    pass
+            self.sensor_block(x, y, "REAR GEAR", rear_gear)
+            x += self.sensor_block_w + self.sensor_block_pad
+        if "altitude" in fit_units:
+            self.sensor_block(
+                x,
+                y,
+                "ALTITUDE",
+                round(fit_frame["altitude"]) if "altitude" in fit_frame else "-",
+            )
             x += self.sensor_block_w
 
     def sensor_rect(self, x, y, fill=(64, 64, 64, 255)):
@@ -145,7 +139,7 @@ class DefaultOverlay(BaseOverlay):
         self.sensor_h(x, y, h)
 
     def sensor_hr(self, x, y, v):
-        for hr in hr_zones:
+        for hr in self.state.hr_zones:
             if v >= hr[0]:
                 self.sensor_rect(x, y, hr[1])
                 break

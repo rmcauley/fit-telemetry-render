@@ -1,7 +1,7 @@
 import sys
 from math import floor
 
-from PySide6.QtCore import QStandardPaths, Qt, QSettings
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
@@ -36,10 +36,9 @@ def get_supported_mime_types():
 class VideoLayout(QVBoxLayout):
     _overlay: BaseOverlay
 
-    def __init__(self, settings: QSettings, state: AppState):
+    def __init__(self, state: AppState):
         super().__init__()
 
-        self._settings = settings
         self._state = state
         self._overlay = None
         self._last_updated_pos = 0
@@ -107,31 +106,7 @@ class VideoLayout(QVBoxLayout):
 
     def open(self):
         self._ensure_stopped()
-        file_dialog = QFileDialog(self.parentWidget())
-
-        if not self._mime_types:
-            self._mime_types = get_supported_mime_types()
-            if MP4 not in self._mime_types:
-                self._mime_types.append(MP4)
-
-        file_dialog.setMimeTypeFilters(self._mime_types)
-
-        default_mimetype = MP4
-        if default_mimetype in self._mime_types:
-            file_dialog.selectMimeTypeFilter(default_mimetype)
-
-        movies_location = self._settings.value(
-            "movie_file_path",
-            QStandardPaths.writableLocation(
-                QStandardPaths.StandardLocation.MoviesLocation
-            ),
-        )
-        file_dialog.setDirectory(movies_location)
-        if file_dialog.exec() == QDialog.DialogCode.Accepted:
-            url = file_dialog.selectedUrls()[0]
-            self._overlay = None
-            if url.isLocalFile():
-                self._state.video_path = url.toLocalFile()
+        self._state.open_video_dialog()
 
     def _open_video(self):
         self._player.setSource(self._state.video_path)

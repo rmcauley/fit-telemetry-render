@@ -9,10 +9,9 @@ from state import AppState
 class OffsetLayout(QHBoxLayout):
     _state: AppState
 
-    def __init__(self, settings, state: AppState):
+    def __init__(self, state: AppState):
         super().__init__()
 
-        self._settings = settings
         self._state = state
 
         self._slider = QSlider()

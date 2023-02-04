@@ -1,5 +1,7 @@
 from PIL import Image, ImageDraw
 
+from state import AppState
+
 
 class BaseOverlay:
     _im: Image.Image
@@ -8,10 +10,11 @@ class BaseOverlay:
     h: int
     fill: tuple
 
-    def __init__(self, w: int, h: int, fill=(0, 0, 0, 0)) -> None:
+    def __init__(self, state: AppState, w: int, h: int) -> None:
+        self.state = state
         self.w = w
         self.h = h
-        self.fill = fill
+        self.fill = (0, 0, 0, 0)
         self._im = Image.new("RGBA", (w, h))
         self._draw = ImageDraw.Draw(self._im)
 
