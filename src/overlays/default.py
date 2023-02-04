@@ -77,7 +77,7 @@ class DefaultOverlay(BaseOverlay):
                         self.state.front_gears[round(fit_frame["front_gear_num"])] + "T"
                     )
                 except ValueError:
-                    pass
+                    front_gear = "ERR"
             self.sensor_block(x, y, "FRONT GEAR", front_gear)
             x += self.sensor_block_w + self.sensor_block_pad
         if "rear_gear_num" in fit_units:
@@ -89,7 +89,7 @@ class DefaultOverlay(BaseOverlay):
                         self.state.rear_gears[round(fit_frame["rear_gear_num"])] + "T"
                     )
                 except ValueError:
-                    pass
+                    rear_gear = "ERR"
             self.sensor_block(x, y, "REAR GEAR", rear_gear)
             x += self.sensor_block_w + self.sensor_block_pad
         if "altitude" in fit_units:

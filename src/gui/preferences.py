@@ -11,12 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 from state import AppState
-
-known_rear_mechs = {"11,12,13,14,15,17,19,21,24,27,30,34": "Shimano Road 12spd"}
-
-known_front_mechs = {
-    "34,50": "Shimano Road",
-}
+from gears import KNOWN_REAR_MECHS, KNOWN_FRONT_MECHS
 
 
 class Spacer(QLabel):
@@ -36,33 +31,15 @@ class PreferencesModal(QDialog):
 
         self.setWindowTitle("Preferences")
 
-        QBtn = (
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-
-        self.buttonBox = QDialogButtonBox(QBtn)
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
-
-        self._prefs = {
-            "front_gears": ",".join(state.front_gears),
-            "rear_gears": ",".join(state.rear_gears),
-            "encoder": state.encoder,
-            "hr_zone_1": str(state.hr_zones[3][0]),
-            "hr_zone_2": str(state.hr_zones[2][0]),
-            "hr_zone_3": str(state.hr_zones[1][0]),
-            "hr_zone_4": str(state.hr_zones[0][0]),
-        }
-
         layout = QVBoxLayout()
 
         front_gear_label = QLabel()
         front_gear_label.setText("Di2 Front Gearing")
         layout.addWidget(front_gear_label)
         front_gear = QComboBox()
-        for gears, name in known_front_mechs.items():
-            front_gear.addItem(f"{name}: {gears}")
-        front_gear.currentIndexChanged.connect(self._front_gear_change)
+        for name in KNOWN_FRONT_MECHS.keys():
+            front_gear.addItem(name)
+        self._front_gear = front_gear
         layout.addWidget(front_gear)
 
         layout.addWidget(Spacer())
@@ -71,10 +48,9 @@ class PreferencesModal(QDialog):
         rear_gear_label.setText("Di2 Rear Gearing")
         layout.addWidget(rear_gear_label)
         rear_gear = QComboBox()
-        for gears, name in known_rear_mechs.items():
-            show_gears = gears.split(",")
-            rear_gear.addItem(f"{name}: {show_gears[0]}-{show_gears[-1]}")
-        rear_gear.currentIndexChanged.connect(self._rear_gear_change)
+        for name in KNOWN_REAR_MECHS.keys():
+            rear_gear.addItem(name)
+        self._rear_gear = rear_gear
         layout.addWidget(rear_gear)
 
         layout.addWidget(Spacer())
@@ -87,7 +63,7 @@ class PreferencesModal(QDialog):
         encoder = QComboBox()
         encoder.addItem("nvidia")
         encoder.addItem("libx264")
-        encoder.currentTextChanged.connect(self._encoder_change)
+        self._encoder = encoder
         layout.addWidget(encoder)
 
         layout.addLayout(settings_layout)
@@ -96,59 +72,86 @@ class PreferencesModal(QDialog):
 
         zone_layout = QFormLayout()
 
-        zone1 = QLineEdit(self._prefs["hr_zone_1"])
+        zone1 = QLineEdit()
         zone1.setValidator(QIntValidator())
-        zone1.textChanged.connect(self._hr_zone_1_change)
+        self._hr_zone_1 = zone1
         zone_layout.addRow("Zone 1 Min HR", zone1)
 
-        zone2 = QLineEdit(self._prefs["hr_zone_2"])
+        zone2 = QLineEdit()
         zone2.setValidator(QIntValidator())
-        zone2.textChanged.connect(self._hr_zone_2_change)
+        self._hr_zone_2 = zone2
         zone_layout.addRow("Zone 2 Min HR", zone2)
 
-        zone3 = QLineEdit(self._prefs["hr_zone_3"])
+        zone3 = QLineEdit()
         zone3.setValidator(QIntValidator())
-        zone3.textChanged.connect(self._hr_zone_3_change)
+        self._hr_zone_3 = zone3
         zone_layout.addRow("Zone 3 Min HR", zone3)
 
-        zone4 = QLineEdit(self._prefs["hr_zone_4"])
+        zone4 = QLineEdit()
         zone4.setValidator(QIntValidator())
-        zone4.textChanged.connect(self._hr_zone_4_change)
+        self._hr_zone_4 = zone4
         zone_layout.addRow("Zone 4 Min HR", zone4)
 
         layout.addLayout(zone_layout)
 
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+
         self.setLayout(layout)
 
+        self.reset_values()
+
+    def reset_values(self):
+        self._front_gear.setCurrentText(
+            next(
+                (
+                    k
+                    for k, v in KNOWN_FRONT_MECHS.items()
+                    if v == self._state.front_gears
+                ),
+                "Unknown",
+            )
+        )
+        self._rear_gear.setCurrentText(
+            next(
+                (k for k, v in KNOWN_REAR_MECHS.items() if v == self._state.rear_gears),
+                "Unknown",
+            )
+        )
+        self._encoder.setCurrentText(self._state.encoder)
+        self._hr_zone_4.setText(str(self._state.hr_zones[0][0]))
+        self._hr_zone_3.setText(str(self._state.hr_zones[1][0]))
+        self._hr_zone_2.setText(str(self._state.hr_zones[2][0]))
+        self._hr_zone_1.setText(str(self._state.hr_zones[3][0]))
+
     def accept(self):
-        self._state.front_gears = self._prefs["front_gears"]
-        self._state.rear_gears = self._prefs["rear_gears"]
-        self._state.encoder = self._prefs["encoder"]
-        self._state.hr_zones[0] = self._prefs["hr_zone_4"]
-        self._state.hr_zones[1] = self._prefs["hr_zone_3"]
-        self._state.hr_zones[2] = self._prefs["hr_zone_2"]
-        self._state.hr_zones[3] = self._prefs["hr_zone_1"]
+        self._state.front_gears = next(
+            (
+                v
+                for k, v in KNOWN_FRONT_MECHS.items()
+                if k == self._front_gear.currentText()
+            ),
+            [],
+        )
+        self._state.rear_gears = next(
+            (
+                v
+                for k, v in KNOWN_REAR_MECHS.items()
+                if k == self._rear_gear.currentText()
+            ),
+            [],
+        )
+        self._state.encoder = self._encoder.currentText()
+        self._state.hr_zones[0][0] = int(self._hr_zone_1.text())
+        self._state.hr_zones[1][0] = int(self._hr_zone_2.text())
+        self._state.hr_zones[2][0] = int(self._hr_zone_3.text())
+        self._state.hr_zones[3][0] = int(self._hr_zone_4.text())
+        self.hide()
 
     def reject(self):
-        pass
-
-    def _front_gear_change(self, index):
-        pass
-
-    def _rear_gear_change(self, index):
-        pass
-
-    def _encoder_change(self, value):
-        pass
-
-    def _hr_zone_1_change(self, value):
-        pass
-
-    def _hr_zone_2_change(self, value):
-        pass
-
-    def _hr_zone_3_change(self, value):
-        pass
-
-    def _hr_zone_4_change(self, value):
-        pass
+        self.hide()
+        self.reset_values()

@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QFileDialog, QDialog
 from PySide6.QtMultimedia import QMediaFormat
 
 from fit import FitFile, get_fit_dict
+from gears import KNOWN_REAR_MECHS, KNOWN_FRONT_MECHS
 
 MP4 = "video/mp4"
 
@@ -160,11 +161,11 @@ class AppState(QObject):
         return self._settings.value(
             "hr_zones",
             [
-                (173, (100, 0, 100, 255)),
-                (164, (100, 0, 0, 255)),
-                (149, (100, 77, 0, 255)),
-                (134, (0, 100, 0, 255)),
-                (-1, (0, 86, 147, 255)),
+                [173, (100, 0, 100, 255)],
+                [164, (100, 0, 0, 255)],
+                [149, (100, 77, 0, 255)],
+                [134, (0, 100, 0, 255)],
+                [-1, (0, 86, 147, 255)],
             ],
         )
 
@@ -175,7 +176,9 @@ class AppState(QObject):
     @property
     def front_gears(self) -> list:
         # Default is 2-ring Shimano road
-        return self._settings.value("front_gears", ["", "34", "50"])
+        return self._settings.value(
+            "front_gears", KNOWN_FRONT_MECHS["Shimano Road 34,50"]
+        )
 
     @front_gears.setter
     def front_gears(self, v: list) -> None:
@@ -184,23 +187,7 @@ class AppState(QObject):
     @property
     def rear_gears(self) -> list:
         return self._settings.value(
-            "rear_gears",
-            # Default is 12-speed Shimano road cassette
-            [
-                "",
-                "34",
-                "30",
-                "27",
-                "24",
-                "21",
-                "19",
-                "17",
-                "15",
-                "14",
-                "13",
-                "12",
-                "11",
-            ],
+            "rear_gears", KNOWN_REAR_MECHS["Shimano Road 12spd 11-34"]
         )
 
     @rear_gears.setter
