@@ -1,10 +1,7 @@
 import os
 import json
 
-from PySide6.QtCore import QStandardPaths
 from PySide6.QtWidgets import (
-    QDialog,
-    QFileDialog,
     QPushButton,
     QVBoxLayout,
     QHBoxLayout,
@@ -17,10 +14,9 @@ from state import AppState
 class FitLayout(QVBoxLayout):
     _state: AppState
 
-    def __init__(self, settings, state: AppState):
+    def __init__(self, state: AppState):
         super().__init__()
 
-        self._settings = settings
         self._state = state
 
         self._web = QWebEngineView()
@@ -33,7 +29,7 @@ class FitLayout(QVBoxLayout):
         self.addLayout(tool_bar, stretch=1)
 
         self._open_button = QPushButton("Open Fit File")
-        self._open_button.clicked.connect(self.open)
+        self._open_button.clicked.connect(state.open_fit_dialog)
         tool_bar.addWidget(self._open_button)
 
         self._state.fitOffsetChange.connect(self.show_offset)
@@ -43,23 +39,6 @@ class FitLayout(QVBoxLayout):
 
         if self._state.fit:
             self._on_fit_change()
-
-    def open(self):
-        file_dialog = QFileDialog(self.parentWidget(), filter="fit(*.fit)")
-
-        fits_location = self._settings.value(
-            "fit_file_path",
-            QStandardPaths.writableLocation(
-                QStandardPaths.StandardLocation.DownloadLocation
-            ),
-        )
-        file_dialog.setDirectory(fits_location)
-        if file_dialog.exec() == QDialog.DialogCode.Accepted:
-            url = file_dialog.selectedUrls()[0]
-            fit_path = url.toLocalFile()
-            if url.isLocalFile():
-                self._settings.setValue("fit_file_path", os.path.dirname(fit_path))
-            self._state.fit_path = fit_path
 
     def _on_fit_change(self):
         fit = self._state.fit

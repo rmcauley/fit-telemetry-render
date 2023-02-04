@@ -1,10 +1,14 @@
+# This file is for developing overlays.
+# Place a "preview.png" file in the same directory as this, adjust
+# the overlay import to your overlay if necessary, and run this file.
+
 import sys
 import importlib
 import datetime
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize
 from PySide6.QtCore import QFileSystemWatcher
-from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QMainWindow, QApplication, QLabel
 
 from PIL import Image
 
@@ -82,6 +86,7 @@ class MainWindow(QMainWindow):
         self.central_widget.setPixmap(pil_im.toqpixmap())
 
 
-app = QApplication(sys.argv)
-w = MainWindow()
-app.exec()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    w = MainWindow()
+    app.exec()

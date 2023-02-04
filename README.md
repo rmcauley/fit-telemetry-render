@@ -17,6 +17,8 @@ Renders .FIT data on top of video files, with special care for GoPro videos mean
 
 The app needs to be run in a terminal, as the export process has no GUI.
 
+Run `src/main.py`:
+
 1. Open a fit file
 2. Open your video, or the first GoPro video in the chain (`GX01#####.mp4`)
 3. Find a recognizable spot in the video using the seek bar that was along your route (intersections work well)
