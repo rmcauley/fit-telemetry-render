@@ -33,3 +33,7 @@ Run `src/main.py`:
 - No status bar for video / video errors
 - Video does not render preview immediately after opening
 - FIT+Video offset bar does not return to previously saved position on app reload
+
+## TODO
+
+- Ability to select/deselect which gauges to display on export

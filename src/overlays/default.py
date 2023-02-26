@@ -2,6 +2,8 @@ from .base import BaseOverlay
 
 from PIL import ImageFont
 
+from fit import FitFile
+
 draw_keys = [
     "speed",
     "altitude",
@@ -34,27 +36,26 @@ class DefaultOverlay(BaseOverlay):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.font_l = ImageFont.truetype("./fonts/JetBrainsMono-ExtraBold.ttf", 200)
-        self.font_m = ImageFont.truetype("./fonts/JetBrainsMono-ExtraBold.ttf", 148)
-        self.font_s = ImageFont.truetype("./fonts/JetBrainsMono-ExtraBold.ttf", 60)
+        self.font_l = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 200)
+        self.font_m = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 148)
+        self.font_s = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 60)
 
-    def draw(self, fit_frame: dict, fit_units: dict) -> None:
+    def draw(self, fit_frame: dict, fit_file: FitFile) -> None:
+        fit_units = fit_file.units
+
         sensor_count = 0
         for key in draw_keys:
-            if key in fit_frame:
+            if key in fit_frame and key != "speed":
                 sensor_count += 1
         width = sensor_count * self.sensor_block_w + (
             (sensor_count - 1) * self.sensor_block_pad
         )
-        x = (self.w / 2) - (width / 2)
+        x = 0
         y = self.h - self.sensor_block_h
 
         if "speed" in fit_units:
             self.sensor_block(
-                x,
-                y,
-                fit_units["speed"].upper(),
-                round(fit_frame["speed"]) if "speed" in fit_frame else "-",
+                x, y, fit_units["speed"].upper(), fit_frame.get("speed", "-")
             )
             x += self.sensor_block_w + self.sensor_block_pad
         if "heart_rate" in fit_units:
@@ -71,7 +72,7 @@ class DefaultOverlay(BaseOverlay):
         if "front_gear_num" in fit_units:
             front_gear = "-"
             if "front_gear_num" in fit_frame:
-                front_gear = "#" + fit_frame["front_gear_num"]
+                front_gear = "#" + str(fit_frame["front_gear_num"])
                 try:
                     front_gear = (
                         self.state.front_gears[round(fit_frame["front_gear_num"])] + "T"
@@ -83,7 +84,7 @@ class DefaultOverlay(BaseOverlay):
         if "rear_gear_num" in fit_units:
             rear_gear = "-"
             if "rear_gear_num" in fit_frame:
-                rear_gear = "#" + fit_frame["rear_gear_num"]
+                rear_gear = "#" + str(fit_frame["rear_gear_num"])
                 try:
                     rear_gear = (
                         self.state.rear_gears[round(fit_frame["rear_gear_num"])] + "T"
@@ -100,6 +101,15 @@ class DefaultOverlay(BaseOverlay):
                 round(fit_frame["altitude"]) if "altitude" in fit_frame else "-",
             )
             x += self.sensor_block_w
+
+    def speed(self, speed, units, max_speed):
+        self._draw.arc(
+            [(self.w - 800, self.h - 900), (self.w - 50, self.h - 50)],
+            start=90,
+            end=270 * (speed / max_speed) + 90,
+            fill=(255, 255, 255, 255),
+            width=70,
+        )
 
     def sensor_rect(self, x, y, fill=(64, 64, 64, 255)):
         self._draw.rectangle(

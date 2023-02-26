@@ -3,6 +3,7 @@
 # the overlay import to your overlay if necessary, and run this file.
 
 import sys
+import os
 import importlib
 import datetime
 
@@ -12,7 +13,9 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QLabel
 
 from PIL import Image
 
-import src.overlays.default as overlay
+import overlays.default as overlay
+from state import AppState
+from fit import FitFile
 
 fit_frame = {
     "timestamp": datetime.datetime(
@@ -22,7 +25,7 @@ fit_frame = {
     "position_long": -16.71821173776546,
     "gps_accuracy": 10,
     "distance": 51768.25,
-    "speed": 20,
+    "speed": 22,
     "battery_soc": 73.0,
     "temperature": 22,
     "altitude": 1232.79999999999995,
@@ -50,6 +53,14 @@ fit_units = {
     "cadence": "rpm",
     "heart_rate": "bpm",
     "calories": "kcal",
+    "front_gear_num": "T",
+    "rear_gear_num": "T",
+}
+fit_max = {
+    "speed": 35,
+}
+fit_min = {
+    "speed": 0,
 }
 
 
@@ -64,6 +75,11 @@ class MainWindow(QMainWindow):
         watcher.addPath("./preview.png")
         watcher.fileChanged.connect(self.on_overlay_changed)
 
+        self.state = AppState(self)
+        self.fit = FitFile()
+        self.fit.units = fit_units
+        self.fit.max = fit_max
+        self.fit.min = fit_min
         self.central_widget = QLabel()
         self.setCentralWidget(self.central_widget)
         self.show()
@@ -74,9 +90,12 @@ class MainWindow(QMainWindow):
         self.render_preview()
 
     def render_preview(self):
-        pil_im = Image.open("preview.png").convert("RGBA")
-        o = overlay.DefaultOverlay(pil_im.width, pil_im.height, (0, 0, 0, 0)).overlay(
-            fit_frame, fit_units
+        pil_im = Image.open(
+            os.path.join(os.path.dirname(__file__), "preview.png")
+        ).convert("RGBA")
+
+        o = overlay.DefaultOverlay(self.state, pil_im.width, pil_im.height).overlay(
+            fit_frame, self.fit
         )
         pil_im.alpha_composite(o)
         pil_im = pil_im.resize(

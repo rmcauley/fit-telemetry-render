@@ -128,5 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-/preview.png
+src/preview.png
 /.temp*

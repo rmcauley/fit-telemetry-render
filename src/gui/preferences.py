@@ -146,10 +146,13 @@ class PreferencesModal(QDialog):
             [],
         )
         self._state.encoder = self._encoder.currentText()
-        self._state.hr_zones[0][0] = int(self._hr_zone_1.text())
-        self._state.hr_zones[1][0] = int(self._hr_zone_2.text())
-        self._state.hr_zones[2][0] = int(self._hr_zone_3.text())
-        self._state.hr_zones[3][0] = int(self._hr_zone_4.text())
+        self._state.hr_zones = [
+            [int(self._hr_zone_4.text()), (100, 0, 100, 255)],
+            [int(self._hr_zone_3.text()), (100, 0, 0, 255)],
+            [int(self._hr_zone_2.text()), (100, 77, 0, 255)],
+            [int(self._hr_zone_1.text()), (0, 100, 0, 255)],
+            [-1, (0, 86, 147, 255)],
+        ]
         self.hide()
 
     def reject(self):

@@ -9,6 +9,8 @@ class FitFile(dict):
     max_long: int
     mid_lat: int
     mid_long: int
+    max: dict
+    min: dict
 
     def __init__(self, *args, **kwargs) -> None:
         self.units = {}
@@ -18,6 +20,8 @@ class FitFile(dict):
         self.max_long = -255
         self.mid_lat = 0
         self.mid_long = 0
+        self.max = {}
+        self.min = {}
         super().__init__(*args, **kwargs)
 
     def get_point(self, second: int) -> dict:
@@ -49,6 +53,8 @@ def get_fit_dict(path: str) -> FitFile:
                             "rear_gear_num": frame.get_value("rear_gear_num"),
                         }
                     )
+                    fitted.units["front_gear_num"] = "T"
+                    fitted.unuts["rear_gear_num"] = "T"
                     second = round(
                         (
                             frame_values.get("timestamp", time_created) - time_created
@@ -78,6 +84,18 @@ def get_fit_dict(path: str) -> FitFile:
                             if f.value > fitted.max_lat:
                                 fitted.max_lat = f.value
                         frame_values[f.field_def.name] = f.value
+
+                        if (
+                            not fitted.max.get(f.field_def.name)
+                            or f.value > fitted.max[f.field_def.name]
+                        ):
+                            fitted.max[f.field_def.name] = f.value
+                        if f.value > 0 and (
+                            not fitted.min.get(f.field_def.name)
+                            or f.value < fitted.min[f.field_def.name]
+                        ):
+                            fitted.min[f.field_def.name] = f.value
+
                 second = round(
                     (
                         frame_values.get("timestamp", time_created) - time_created

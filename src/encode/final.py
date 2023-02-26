@@ -1,11 +1,12 @@
 import os
 
 import ffmpeg
+from state import AppState
 
 NVIDIA_MAX_BITRATE = 60000
 
 
-def encode_final(input_file: str, out: str, tempdir: str):
+def encode_final(state: AppState, input_file: str, out: str, tempdir: str):
     duration = round(float(ffmpeg.probe(input_file)["streams"][0]["duration"]))
     max_rate = min(NVIDIA_MAX_BITRATE, int(((125000 * 8192) / duration) - 128))
     avg_rate = int(max_rate * 0.9)
@@ -21,25 +22,28 @@ def encode_final(input_file: str, out: str, tempdir: str):
     overlaid_stream = ffmpeg.overlay(
         input_video_stream, overlay_stream, eof_action="pass"
     )
-    runner = ffmpeg.output(
-        input_audio_stream,
-        overlaid_stream,
-        out,
-        **{
-            "c:v": "hevc_nvenc",
-            "preset": "medium",
-            "rc-lookahead:v": "16",
-            "b_ref_mode:v": "middle",
-            "temporal-aq:v": "1",
-            "spatial-aq:v": "1",
-            "b:v": f"{avg_rate}K",
-            "maxrate:v": f"{max_rate}K",
-            "bufsize:v": f"{buf_size}K",
-            "c:a": "copy",
-            "movflags": "+faststart",
-            "f": "mp4",
-            "y": None,
-            "hide_banner": None,
-        },
-    )
+    ffmpeg_options = {
+        "c:a": "copy",
+        "movflags": "+faststart",
+        "f": "mp4",
+        "y": None,
+        "hide_banner": None,
+        "b:v": f"{avg_rate}K",
+        "maxrate:v": f"{max_rate}K",
+        "bufsize:v": f"{buf_size}K",
+    }
+    if state.encoder == "nvidia":
+        ffmpeg_options.update(
+            {
+                "c:v": "hevc_nvenc",
+                "preset": "medium",
+                "rc-lookahead:v": "16",
+                "b_ref_mode:v": "middle",
+                "temporal-aq:v": "1",
+                "spatial-aq:v": "1",
+            }
+        )
+    else:
+        ffmpeg_options.update({"c:v": "libx264"})
+    runner = ffmpeg.output(input_audio_stream, overlaid_stream, out, **ffmpeg_options)
     runner.run()
