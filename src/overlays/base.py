@@ -1,4 +1,5 @@
 from PIL import Image, ImageDraw
+from pilmoji import Pilmoji
 
 from state import AppState
 from fit import FitFile
@@ -18,6 +19,7 @@ class BaseOverlay:
         self.fill = (0, 0, 0, 0)
         self._im = Image.new("RGBA", (w, h))
         self._draw = ImageDraw.Draw(self._im)
+        self._pilmoji = Pilmoji(self._im)
 
     def overlay(self, fit_frame: dict, fit_file: FitFile) -> Image.Image:
         self._draw.rectangle((0, 0, self._im.width, self._im.height), fill=self.fill)

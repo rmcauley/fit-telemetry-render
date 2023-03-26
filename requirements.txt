@@ -1,3 +1,4 @@
 pillow
 pyside6
 ffmpeg-python
+pilmoji

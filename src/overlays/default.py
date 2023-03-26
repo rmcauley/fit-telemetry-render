@@ -8,11 +8,12 @@ draw_keys = [
     "speed",
     "altitude",
     "grade",
-    "cadence",
     "front_gear_num",
     "rear_gear_num",
     "heart_rate",
 ]
+
+hr_emoji = ["💜", "❤️", "💛", "💚", "💙"]
 
 grades = [
     (-100, (64, 64, 64, 255)),
@@ -36,143 +37,94 @@ class DefaultOverlay(BaseOverlay):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.font_xl = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 400)
         self.font_l = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 200)
         self.font_m = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 148)
         self.font_s = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 60)
 
     def draw(self, fit_frame: dict, fit_file: FitFile) -> None:
         fit_units = fit_file.units
-
-        sensor_count = 0
-        for key in draw_keys:
-            if key in fit_frame and key != "speed":
-                sensor_count += 1
-        width = sensor_count * self.sensor_block_w + (
-            (sensor_count - 1) * self.sensor_block_pad
-        )
-        x = 0
-        y = self.h - self.sensor_block_h
+        remainder = []
 
         if "speed" in fit_units:
-            self.sensor_block(
-                x, y, fit_units["speed"].upper(), fit_frame.get("speed", "-")
+            self.speed(
+                fit_frame.get("speed", "-"),
+                fit_units["speed"].upper(),
+                fit_file.max.get("speed"),
             )
-            x += self.sensor_block_w + self.sensor_block_pad
-        if "heart_rate" in fit_units:
-            self.sensor_hr(x, y, fit_frame.get("heart_rate", "-"))
-            x += self.sensor_block_w + self.sensor_block_pad
-        if "cadence" in fit_units:
-            self.sensor_block(
-                x, y, fit_units["cadence"].upper(), fit_frame.get("cadence", "-")
-            )
-            x += self.sensor_block_w + self.sensor_block_pad
-        if "grade" in fit_units:
-            self.sensor_grade(x, y, fit_frame.get("grade", "-"))
-            x += self.sensor_block_w + self.sensor_block_pad
-        if "front_gear_num" in fit_units:
-            front_gear = "-"
-            if "front_gear_num" in fit_frame:
-                front_gear = "#" + str(fit_frame["front_gear_num"])
-                try:
-                    front_gear = (
-                        self.state.front_gears[round(fit_frame["front_gear_num"])] + "T"
-                    )
-                except ValueError:
-                    front_gear = "ERR"
-            self.sensor_block(x, y, "FRONT GEAR", front_gear)
-            x += self.sensor_block_w + self.sensor_block_pad
-        if "rear_gear_num" in fit_units:
-            rear_gear = "-"
-            if "rear_gear_num" in fit_frame:
-                rear_gear = "#" + str(fit_frame["rear_gear_num"])
-                try:
-                    rear_gear = (
-                        self.state.rear_gears[round(fit_frame["rear_gear_num"])] + "T"
-                    )
-                except ValueError:
-                    rear_gear = "ERR"
-            self.sensor_block(x, y, "REAR GEAR", rear_gear)
-            x += self.sensor_block_w + self.sensor_block_pad
+        if "front_gear_num" in fit_units and "rear_gear_num" in fit_units:
+            try:
+                front_gear = int(
+                    self.state.front_gears[round(fit_frame["front_gear_num"])]
+                )
+                rear_gear = int(
+                    self.state.rear_gears[round(fit_frame["rear_gear_num"])]
+                )
+                ratio = round(front_gear / rear_gear, 2)
+                remainder.append(f"{ratio}x")
+            except ValueError:
+                remainder.append("-.--" + "x")
         if "altitude" in fit_units:
-            self.sensor_block(
-                x,
-                y,
-                "ALTITUDE",
-                round(fit_frame["altitude"]) if "altitude" in fit_frame else "-",
-            )
-            x += self.sensor_block_w
+            altitude = round(fit_frame["altitude"]) if "altitude" in fit_frame else "-"
+            remainder.append(f"{altitude}{fit_units['altitude']}")
+        if "grade" in fit_units:
+            remainder.append(str(fit_frame.get("grade", "-")) + "%")
+        if "heart_rate" in fit_units:
+            hr = fit_frame.get("heart_rate", "-")
+            self.sensor_hr(hr)
+            remainder.append(str(hr))
+
+        self._draw.text(
+            [self.w - 700, self.h - 120],
+            "  ".join(remainder),
+            fill=(255, 255, 255),
+            font=self.font_m,
+            anchor="rb",
+        )
 
     def speed(self, speed, units, max_speed):
-        self._draw.arc(
-            [(self.w - 800, self.h - 900), (self.w - 50, self.h - 50)],
-            start=90,
-            end=270 * (speed / max_speed) + 90,
-            fill=(255, 255, 255, 255),
-            width=70,
-        )
-
-    def sensor_rect(self, x, y, fill=(64, 64, 64, 255)):
-        self._draw.rectangle(
-            (x, y, x + self.sensor_block_w, y + self.sensor_block_h),
-            fill=fill,
-            outline=(0, 0, 0, 255),
-            width=2,
-        )
-
-    def sensor_h(self, x, y, h):
+        # An arc for a speedometer that would need frame-by-frame rendering
+        # self._draw.arc(
+        #     [(self.w - 800, self.h - 900), (self.w - 50, self.h - 50)],
+        #     start=90,
+        #     end=270 * (speed / max_speed) + 90,
+        #     fill=(255, 255, 255, 255),
+        #     width=70,
+        # )
         self._draw.text(
-            [x + (self.sensor_block_w / 2), (y + 195)],
-            h,
+            [self.w - 120, self.h - 120],
+            str(speed),
+            fill=(255, 255, 255),
+            font=self.font_xl,
+            anchor="rb",
+        )
+        self._draw.text(
+            [self.w - 140, self.h - 450],
+            units,
             fill=(255, 255, 255),
             font=self.font_s,
-            anchor="ma",
+            anchor="rb",
         )
 
-    def sensor_v(self, x, y, v):
-        font = self.font_l
-        if isinstance(v, int) and (v > 1000 or v < -99):
-            font = self.font_m
-        elif isinstance(v, str) and len(v) > 3:
-            font = self.font_m
-
-        self._draw.text(
-            [x + (self.sensor_block_w / 2), y + 110],
-            str(v),
-            fill=(255, 255, 255),
-            font=font,
-            anchor="mm",
-        )
-
-    def sensor_block(self, x, y, h, v):
-        self.sensor_rect(x, y)
-        self.sensor_v(x, y, v)
-        self.sensor_h(x, y, h)
-
-    def sensor_hr(self, x, y, v):
-        for hr in self.state.hr_zones:
+    def sensor_hr(self, v):
+        heart = hr_emoji[-1]
+        if isinstance(v, str):
+            return
+        for i, hr in enumerate(self.state.hr_zones):
             if v >= hr[0]:
-                self.sensor_rect(x, y, hr[1])
+                heart = hr_emoji[i]
                 break
-        self.sensor_v(x, y, v)
-        self.sensor_h(x, y, "BPM")
-
-    def sensor_grade(self, x, y, v):
-        self.sensor_rect(x, y)
-        if v > 0:
-            for g in grades:
-                if v >= g[0]:
-                    self._draw.polygon(
-                        (
-                            (x, y + self.sensor_block_h),
-                            (
-                                x + self.sensor_block_w,
-                                max(y, y + self.sensor_block_h - (v * 20)),
-                            ),
-                            (x + self.sensor_block_w, y + self.sensor_block_h),
-                        ),
-                        fill=g[1],
-                    )
-                    break
-
-        self.sensor_h(x, y, "GRADE")
-        self.sensor_v(x, y, str(round(v)) + "%")
+        self._pilmoji.text(
+            [self.w - 680, self.h - 230],
+            text="🤍",
+            anchor="tl",
+            font=self.font_m,
+            emoji_scale_factor=0.8,
+        )
+        self._pilmoji.text(
+            [self.w - 680 + 8, self.h - 222],
+            text=heart,
+            anchor="tl",
+            font=self.font_m,
+            emoji_scale_factor=0.69,
+        )
