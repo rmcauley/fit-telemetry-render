@@ -60,8 +60,7 @@ class DefaultOverlay(BaseOverlay):
                 rear_gear = int(
                     self.state.rear_gears[round(fit_frame["rear_gear_num"])]
                 )
-                ratio = round(front_gear / rear_gear, 2)
-                remainder.append(f"{ratio}x")
+                remainder.append(f"{rear_gear}/{front_gear}")
             except ValueError:
                 remainder.append("-.--" + "x")
         if "altitude" in fit_units:

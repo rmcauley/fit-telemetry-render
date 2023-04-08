@@ -34,7 +34,7 @@ fit_frame = {
     "descent": 1417,
     "cadence": 75,
     "front_gear_num": 1,
-    "rear_gear_num": 1,
+    "rear_gear_num": 5,
     "heart_rate": 142,
     "calories": 3487,
 }

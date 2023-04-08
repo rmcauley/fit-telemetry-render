@@ -82,8 +82,9 @@ class AppState(QObject):
     def _on_fit_path_change(self, v: str) -> None:
         if self.fit:
             self.fit.close()
-        self.fit = get_fit_dict(v)
-        self.fitChange.emit(self.fit)
+        if v:
+            self.fit = get_fit_dict(v)
+            self.fitChange.emit(self.fit)
 
     @property
     def fit_offset(self) -> int:
