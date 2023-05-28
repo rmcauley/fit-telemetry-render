@@ -9,7 +9,7 @@
       "type": "python",
       "request": "launch",
       "program": "src/main.py",
-      // "program": "preview.py",
+      // "program": "src/preview.py",
       "console": "integratedTerminal",
       "justMyCode": true
     }

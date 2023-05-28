@@ -17,7 +17,7 @@ def encode_final(state: AppState, input_file: str, out: str, tempdir: str):
     overlay_stream = ffmpeg.input(
         os.path.join(tempdir, r"fit-%05d.png"),
         framerate="1",
-        thread_queue_size="32",
+        thread_queue_size="4096",
     )
     overlaid_stream = ffmpeg.overlay(
         input_video_stream, overlay_stream, eof_action="pass"
@@ -37,10 +37,10 @@ def encode_final(state: AppState, input_file: str, out: str, tempdir: str):
             {
                 "c:v": "hevc_nvenc",
                 "preset": "medium",
-                "rc-lookahead:v": "16",
+                "rc-lookahead:v": 16,
                 "b_ref_mode:v": "middle",
-                "temporal-aq:v": "1",
-                "spatial-aq:v": "1",
+                "temporal-aq:v": 1,
+                "spatial-aq:v": 1,
             }
         )
     else:

@@ -54,7 +54,7 @@ def get_fit_dict(path: str) -> FitFile:
                         }
                     )
                     fitted.units["front_gear_num"] = "T"
-                    fitted.unuts["rear_gear_num"] = "T"
+                    fitted.units["rear_gear_num"] = "T"
                     second = round(
                         (
                             frame_values.get("timestamp", time_created) - time_created
@@ -85,16 +85,17 @@ def get_fit_dict(path: str) -> FitFile:
                                 fitted.max_lat = f.value
                         frame_values[f.field_def.name] = f.value
 
-                        if (
-                            not fitted.max.get(f.field_def.name)
-                            or f.value > fitted.max[f.field_def.name]
-                        ):
-                            fitted.max[f.field_def.name] = f.value
-                        if f.value > 0 and (
-                            not fitted.min.get(f.field_def.name)
-                            or f.value < fitted.min[f.field_def.name]
-                        ):
-                            fitted.min[f.field_def.name] = f.value
+                        if isinstance(f, (int, float)):
+                            if (
+                                not fitted.max.get(f.field_def.name)
+                                or f.value > fitted.max[f.field_def.name]
+                            ):
+                                fitted.max[f.field_def.name] = f.value
+                            if f.value > 0 and (
+                                not fitted.min.get(f.field_def.name)
+                                or f.value < fitted.min[f.field_def.name]
+                            ):
+                                fitted.min[f.field_def.name] = f.value
 
                 second = round(
                     (

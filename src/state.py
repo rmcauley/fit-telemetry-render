@@ -6,6 +6,7 @@ from PySide6.QtMultimedia import QMediaFormat
 
 from fit import FitFile, get_fit_dict
 from gears import KNOWN_REAR_MECHS, KNOWN_FRONT_MECHS
+from overlays.default import DefaultOverlay
 
 MP4 = "video/mp4"
 
@@ -16,6 +17,22 @@ def get_supported_mime_types():
         mime_type = QMediaFormat(f).mimeType()
         result.append(mime_type.name())
     return result
+
+
+class StateForOverlay:
+    overlay_class = DefaultOverlay
+    fit_units: dict
+    front_gears: list
+    rear_gears: list
+    hr_zones: list
+
+    def __init__(
+        self, fit_units: dict, front_gears: list, rear_gears: list, hr_zones: list
+    ):
+        self.fit_units = fit_units
+        self.front_gears = front_gears
+        self.rear_gears = rear_gears
+        self.hr_zones = hr_zones
 
 
 class AppState(QObject):
@@ -51,6 +68,11 @@ class AppState(QObject):
 
     def __delete__(self) -> None:
         self._settings.sync()
+
+    def get_state_for_overlay(self):
+        return StateForOverlay(
+            self.fit.units, self.front_gears, self.rear_gears, self.hr_zones
+        )
 
     @property
     def video_path(self) -> str:
@@ -122,7 +144,7 @@ class AppState(QObject):
 
     @fit_dialog_path.setter
     def fit_dialog_path(self, v: str) -> None:
-        self._settings.set("fit_dialog_path", v)
+        self._settings.setValue("fit_dialog_path", v)
 
     @property
     def video_import_dialog_path(self) -> str:
@@ -220,6 +242,7 @@ class AppState(QObject):
         file_dialog.setDirectory(self.video_export_dialog_path)
         if file_dialog.exec() == QDialog.DialogCode.Accepted:
             self.export_path = file_dialog.selectedUrls()[0].toLocalFile()
+            self.exportPathChange.emit(self.export_path)
         else:
             self.export_path = None
 
@@ -240,6 +263,5 @@ class AppState(QObject):
         file_dialog.setDirectory(self.video_import_dialog_path)
         if file_dialog.exec() == QDialog.DialogCode.Accepted:
             url = file_dialog.selectedUrls()[0]
-            self._overlay = None
             if url.isLocalFile():
                 self.video_path = url.toLocalFile()

@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("FIT Telemetry Overlay")
 
         state = AppState(self)
+        state.exportPathChange.connect(self.close)
         self.state = state
 
         self.resize(state.size)

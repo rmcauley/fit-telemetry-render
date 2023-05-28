@@ -15,8 +15,8 @@ def start_encode(state: AppState) -> None:
     with TemporaryDirectory(prefix=".temp", dir=".") as tempdir:
         input_location = movie_files[0]
         if len(movie_files) > 1:
-            input_location = concat(movie_files, tempdir)
+            input_location = concat(movie_files, os.path.dirname(input_location))
 
         write_overlay_images(input_location, state, tempdir)
 
-        encode_final(input_location, state.export_path, tempdir)
+        encode_final(state, input_location, state.export_path, tempdir)

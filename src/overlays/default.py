@@ -2,8 +2,6 @@ from .base import BaseOverlay
 
 from PIL import ImageFont
 
-from fit import FitFile
-
 draw_keys = [
     "speed",
     "altitude",
@@ -42,17 +40,22 @@ class DefaultOverlay(BaseOverlay):
         self.font_m = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 148)
         self.font_s = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 60)
 
-    def draw(self, fit_frame: dict, fit_file: FitFile) -> None:
-        fit_units = fit_file.units
+    def draw(self, fit_frame: dict) -> None:
+        fit_units = self.state.fit_units
         remainder = []
 
         if "speed" in fit_units:
             self.speed(
                 fit_frame.get("speed", "-"),
                 fit_units["speed"].upper(),
-                fit_file.max.get("speed"),
+                None,  # fit_file.max.get("speed"),
             )
-        if "front_gear_num" in fit_units and "rear_gear_num" in fit_units:
+        if (
+            "front_gear_num" in fit_units
+            and "rear_gear_num" in fit_units
+            and "front_gear_num" in fit_frame
+            and "rear_gear_num" in fit_frame
+        ):
             try:
                 front_gear = int(
                     self.state.front_gears[round(fit_frame["front_gear_num"])]

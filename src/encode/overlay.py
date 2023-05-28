@@ -5,20 +5,17 @@ from multiprocessing import Queue, Process, cpu_count
 
 import ffmpeg
 
-from state import AppState
-from overlays.base import BaseOverlay
+from state import StateForOverlay, AppState
 
 
-def write_png(
-    overlay_class: BaseOverlay, tempdir: str, q: Queue, w: int, h: int, fit_units: dict
-):
-    overlay = overlay_class(w, h)
+def write_png(state: StateForOverlay, tempdir: str, q: Queue, w: int, h: int):
+    overlay = state.overlay_class(state, w, h)
     try:
         while frame := q.get(block=True, timeout=3):
             (second, fit_frame) = frame
-            print(f"\r{second}", end="")
+            print(f"\r{second} of {state.duration}", end="")
             second_leading = "{:0>5}".format(second)
-            overlay.overlay(fit_frame, fit_units).save(
+            overlay.overlay(fit_frame).save(
                 os.path.join(tempdir, f"fit-{second_leading}.png"),
             )
     except queue.Empty as e:
@@ -35,17 +32,22 @@ def write_overlay_images(
     h = probe["streams"][0]["height"]
     duration = round(float(probe["streams"][0]["duration"]))
 
-    num_processes = floor(cpu_count() / 2)
+    # Dividing by 2 produces ~60% utilization on a Ryzen 5900X
+    # Dividing by 1.5 produces 85-95% utilization on a Ryzen 5900X
+    num_processes = floor(cpu_count() / 1.5)
     queue = Queue()
 
     for i in range(0, duration):
         queue.put((i, state.fit.get_point(i + state.fit_offset)))
 
+    overlay_state = state.get_state_for_overlay()
+    overlay_state.duration = duration
+
     processes = []
     for i in range(0, num_processes):
         p = Process(
             target=write_png,
-            args=(state.overlay, tempdir, queue, w, h, state.fit.units),
+            args=(overlay_state, tempdir, queue, w, h),
         )
         p.start()
         processes.append(p)
