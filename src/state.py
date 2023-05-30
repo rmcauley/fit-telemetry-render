@@ -243,19 +243,19 @@ class AppState(QObject):
         self.exportPathChange.emit(v)
 
     @property
-    def show_alt(self) -> list:
-        return self._settings.value("show_alt", True)
+    def show_alt(self) -> int:
+        return self._settings.value("show_alt", 1)
 
     @show_alt.setter
-    def show_alt(self, v: bool) -> None:
+    def show_alt(self, v: int) -> None:
         self._settings.setValue("show_alt", v)
 
     @property
-    def show_grade(self) -> list:
-        return self._settings.value("show_grade", True)
+    def show_grade(self) -> int:
+        return self._settings.value("show_grade", 1)
 
     @show_grade.setter
-    def show_grade(self, v: bool) -> None:
+    def show_grade(self, v: int) -> None:
         self._settings.setValue("show_grade", v)
 
     def open_fit_dialog(self):

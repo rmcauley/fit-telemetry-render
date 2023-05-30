@@ -94,9 +94,9 @@ class MainWindow(QMainWindow):
             os.path.join(os.path.dirname(__file__), "preview.png")
         ).convert("RGBA")
 
-        o = overlay.DefaultOverlay(self.state, pil_im.width, pil_im.height).overlay(
-            fit_frame, self.fit
-        )
+        o = overlay.DefaultOverlay(
+            self.state.get_state_for_overlay(), pil_im.width, pil_im.height
+        ).overlay(fit_frame)
         pil_im.alpha_composite(o)
         pil_im = pil_im.resize(
             (self.central_widget.width(), self.central_widget.height()),

@@ -167,10 +167,10 @@ class PreferencesModal(QDialog):
             [-1, (0, 86, 147, 255)],
         ]
         self._state.show_alt = (
-            True if self._show_alt.checkState() == Qt.CheckState.Checked else False
+            1 if self._show_alt.checkState() == Qt.CheckState.Checked else 0
         )
         self._state.show_grade = (
-            True if self._show_grade.checkState() == Qt.CheckState.Checked else False
+            1 if self._show_grade.checkState() == Qt.CheckState.Checked else 0
         )
         self.hide()
 
