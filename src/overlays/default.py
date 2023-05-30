@@ -66,11 +66,11 @@ class DefaultOverlay(BaseOverlay):
                 remainder.append(f"{rear_gear}/{front_gear}")
             except ValueError:
                 remainder.append("-.--" + "x")
-        if "altitude" in fit_units:
+        if "altitude" in fit_units and "altitude" in fit_frame and self.state.show_alt:
             altitude = round(fit_frame["altitude"]) if "altitude" in fit_frame else "-"
             remainder.append(f"{altitude}{fit_units['altitude']}")
-        if "grade" in fit_units:
-            remainder.append(str(fit_frame.get("grade", "-")) + "%")
+        if "grade" in fit_units and "grade" in fit_frame and self.state.show_grade:
+            remainder.append(str(round(fit_frame["grade"])))
         if "heart_rate" in fit_units:
             hr = fit_frame.get("heart_rate", "-")
             self.sensor_hr(hr)

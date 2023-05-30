@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Qt
 from PySide6.QtGui import QIntValidator
 from PySide6.QtWidgets import (
     QDialog,
@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QFormLayout,
+    QCheckBox,
 )
 
 from state import AppState
@@ -72,6 +73,12 @@ class PreferencesModal(QDialog):
 
         zone_layout = QFormLayout()
 
+        self._show_alt = QCheckBox()
+        zone_layout.addRow("Show Altitude", self._show_alt)
+
+        self._show_grade = QCheckBox()
+        zone_layout.addRow("Show Grade", self._show_grade)
+
         zone1 = QLineEdit()
         zone1.setValidator(QIntValidator())
         self._hr_zone_1 = zone1
@@ -127,6 +134,12 @@ class PreferencesModal(QDialog):
         self._hr_zone_3.setText(str(self._state.hr_zones[1][0]))
         self._hr_zone_2.setText(str(self._state.hr_zones[2][0]))
         self._hr_zone_1.setText(str(self._state.hr_zones[3][0]))
+        self._show_alt.setCheckState(
+            Qt.CheckState.Checked if self._state.show_alt else Qt.CheckState.Unchecked
+        )
+        self._show_grade.setCheckState(
+            Qt.CheckState.Checked if self._state.show_grade else Qt.CheckState.Unchecked
+        )
 
     def accept(self):
         self._state.front_gears = next(
@@ -153,6 +166,12 @@ class PreferencesModal(QDialog):
             [int(self._hr_zone_1.text()), (0, 100, 0, 255)],
             [-1, (0, 86, 147, 255)],
         ]
+        self._state.show_alt = (
+            True if self._show_alt.checkState() == Qt.CheckState.Checked else False
+        )
+        self._state.show_grade = (
+            True if self._show_grade.checkState() == Qt.CheckState.Checked else False
+        )
         self.hide()
 
     def reject(self):

@@ -26,5 +26,7 @@ class SensorLabel(QVBoxLayout):
             self._value.setText("--")
         elif isinstance(v, str):
             self._value.setText(v + " " + self._unit)
+        elif isinstance(v, (int, float)):
+            self._value.setText(str(round(v)) + " " + self._unit)
         else:
             self._value.setText(str(v) + " " + self._unit)
