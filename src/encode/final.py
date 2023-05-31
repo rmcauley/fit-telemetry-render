@@ -12,8 +12,12 @@ def encode_final(state: AppState, input_file: str, out: str, tempdir: str):
     avg_rate = int(max_rate * 0.9)
     buf_size = avg_rate * 2
 
+    input_video_kwargs = {}
+    if state.encoder.startswith("nvidia"):
+        input_video_kwargs.update({"hwaccel": "nvdec"})
+
     input_audio_stream = ffmpeg.input(input_file).audio
-    input_video_stream = ffmpeg.input(input_file).video
+    input_video_stream = ffmpeg.input(input_file, **input_video_kwargs).video
     overlay_stream = ffmpeg.input(
         os.path.join(tempdir, r"fit-%05d.png"),
         framerate="1",
@@ -36,7 +40,7 @@ def encode_final(state: AppState, input_file: str, out: str, tempdir: str):
         ffmpeg_options.update(
             {
                 "c:v": "hevc_nvenc",
-                "preset": "medium",
+                "preset": "fast",
                 "rc-lookahead:v": 16,
                 "b_ref_mode:v": "middle",
                 "temporal-aq:v": 1,
@@ -44,6 +48,6 @@ def encode_final(state: AppState, input_file: str, out: str, tempdir: str):
             }
         )
     else:
-        ffmpeg_options.update({"c:v": "libx264"})
+        ffmpeg_options.update({"c:v": "libx264", "preset": "fast"})
     runner = ffmpeg.output(input_audio_stream, overlaid_stream, out, **ffmpeg_options)
     runner.run()
