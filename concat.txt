@@ -1,6 +1,0 @@
-file 'F:/GoPro\GX010035.mp4'
-file 'F:/GoPro\GX020035.mp4'
-file 'F:/GoPro\GX030035.mp4'
-file 'F:/GoPro\GX040035.mp4'
-file 'F:/GoPro\GX050035.mp4'
-file 'F:/GoPro\GX060035.mp4'

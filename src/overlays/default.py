@@ -51,7 +51,8 @@ class DefaultOverlay(BaseOverlay):
                 None,  # fit_file.max.get("speed"),
             )
         if (
-            "front_gear_num" in fit_units
+            self.state.show_gears == 1
+            and "front_gear_num" in fit_units
             and "rear_gear_num" in fit_units
             and "front_gear_num" in fit_frame
             and "rear_gear_num" in fit_frame

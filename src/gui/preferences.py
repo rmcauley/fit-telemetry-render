@@ -79,6 +79,9 @@ class PreferencesModal(QDialog):
         self._show_grade = QCheckBox()
         zone_layout.addRow("Show Grade", self._show_grade)
 
+        self._show_gears = QCheckBox()
+        zone_layout.addRow("Show Gears", self._show_gears)
+
         zone1 = QLineEdit()
         zone1.setValidator(QIntValidator())
         self._hr_zone_1 = zone1
@@ -140,6 +143,9 @@ class PreferencesModal(QDialog):
         self._show_grade.setCheckState(
             Qt.CheckState.Checked if self._state.show_grade else Qt.CheckState.Unchecked
         )
+        self._show_gears.setCheckState(
+            Qt.CheckState.Checked if self._state.show_gears else Qt.CheckState.Unchecked
+        )
 
     def accept(self):
         self._state.front_gears = next(
@@ -171,6 +177,9 @@ class PreferencesModal(QDialog):
         )
         self._state.show_grade = (
             1 if self._show_grade.checkState() == Qt.CheckState.Checked else 0
+        )
+        self._state.show_gears = (
+            1 if self._show_gears.checkState() == Qt.CheckState.Checked else 0
         )
         self.hide()
 

@@ -27,6 +27,7 @@ class StateForOverlay:
     hr_zones: list
     show_alt: bool
     show_grade: bool
+    show_gears: bool
 
     def __init__(
         self,
@@ -36,6 +37,7 @@ class StateForOverlay:
         hr_zones: list,
         show_alt: bool,
         show_grade: bool,
+        show_gears: bool,
     ):
         self.fit_units = fit_units
         self.front_gears = front_gears
@@ -43,6 +45,7 @@ class StateForOverlay:
         self.hr_zones = hr_zones
         self.show_alt = show_alt
         self.show_grade = show_grade
+        self.show_gears = show_gears
 
 
 class AppState(QObject):
@@ -87,6 +90,7 @@ class AppState(QObject):
             self.hr_zones,
             self.show_alt,
             self.show_grade,
+            self.show_gears,
         )
 
     @property
@@ -257,6 +261,14 @@ class AppState(QObject):
     @show_grade.setter
     def show_grade(self, v: int) -> None:
         self._settings.setValue("show_grade", v)
+
+    @property
+    def show_gears(self) -> int:
+        return self._settings.value("show_gears", 1)
+
+    @show_gears.setter
+    def show_gears(self, v: int) -> None:
+        self._settings.setValue("show_gears", v)
 
     def open_fit_dialog(self):
         file_dialog = QFileDialog(self._parent, filter="fit(*.fit)")

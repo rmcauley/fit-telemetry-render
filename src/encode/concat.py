@@ -4,7 +4,7 @@ from typing import List
 
 
 def concat(movie_files: List[str], tempdir: str) -> str:
-    concat_path = os.path.join(".", "concat.txt")
+    concat_path = os.path.join(".", "concat")
     with open(concat_path, "w") as f:
         for movie in movie_files:
             ffmpeg_playlist_path = os.path.join(".", movie)
@@ -14,10 +14,10 @@ def concat(movie_files: List[str], tempdir: str) -> str:
     ffmpeg_concat_opts = [
         "-f concat",
         "-safe 0",
-        f"-i {concat_path}",
+        f'-i "{concat_path}"',
         "-c copy",
         "-y",
-        outpath,
+        f'"{outpath}"',
     ]
     os.system("ffmpeg " + " ".join(ffmpeg_concat_opts))
 

@@ -129,4 +129,6 @@ dmypy.json
 .pyre/
 
 src/preview.png
+concat
+concat.txt
 /.temp*
