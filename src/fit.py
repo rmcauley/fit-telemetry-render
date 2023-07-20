@@ -1,5 +1,7 @@
 import fitdecode
 
+ALWAYS_LIVE_KEYS = ["speed", "grade", "heart_rate"]
+
 
 class FitFile(dict):
     units: dict
@@ -108,7 +110,9 @@ def get_fit_dict(path: str) -> FitFile:
     # fill gaps in keys
     for i in range(duration):
         if not fitted.get(i, None):
-            fitted[i] = fitted.get_point(i)
+            fitted[i] = fitted.get_point(i).copy()
+            for key in ALWAYS_LIVE_KEYS:
+                fitted[i].pop(key, None)
 
     fitted.min_lat = (fitted.max_lat + fitted.min_lat) / 2
     fitted.mid_long = (fitted.max_long + fitted.min_long) / 2
