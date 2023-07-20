@@ -12,6 +12,7 @@ draw_keys = [
 ]
 
 hr_emoji = ["💜", "❤️", "💛", "💚", "💙"]
+blank_hr = "🖤"
 
 grades = [
     (-100, (64, 64, 64, 255)),
@@ -74,8 +75,11 @@ class DefaultOverlay(BaseOverlay):
         ):
             altitude = round(fit_frame["altitude"]) if "altitude" in fit_frame else "-"
             remainder.append(f"{altitude}{fit_units['altitude']}")
-        if "grade" in fit_units and "grade" in fit_frame and self.state.show_grade == 1:
-            remainder.append(str(round(fit_frame["grade"])) + "%")
+        if "grade" in fit_units and self.state.show_grade == 1:
+            if "grade" in fit_frame:
+                remainder.append(str(round(fit_frame["grade"])) + "%")
+            else:
+                remainder.append("-%")
         if "heart_rate" in fit_units:
             hr = fit_frame.get("heart_rate", "-")
             self.sensor_hr(hr)
@@ -116,11 +120,12 @@ class DefaultOverlay(BaseOverlay):
     def sensor_hr(self, v):
         heart = hr_emoji[-1]
         if isinstance(v, str):
-            return
-        for i, hr in enumerate(self.state.hr_zones):
-            if v >= hr[0]:
-                heart = hr_emoji[i]
-                break
+            heart = blank_hr
+        else:
+            for i, hr in enumerate(self.state.hr_zones):
+                if v >= hr[0]:
+                    heart = hr_emoji[i]
+                    break
         self._pilmoji.text(
             [self.w - 680, self.h - 230],
             text="🤍",
