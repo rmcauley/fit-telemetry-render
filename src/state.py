@@ -121,8 +121,6 @@ class AppState(QObject):
         self.fitPathChange.emit(v)
 
     def _on_fit_path_change(self, v: str) -> None:
-        if self.fit:
-            self.fit.close()
         if v:
             self.fit = get_fit_dict(v)
             self.fitChange.emit(self.fit)
@@ -308,3 +306,4 @@ class AppState(QObject):
             url = file_dialog.selectedUrls()[0]
             if url.isLocalFile():
                 self.video_path = url.toLocalFile()
+                self.video_import_dialog_path = os.path.dirname(self.video_path)
