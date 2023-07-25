@@ -18,6 +18,7 @@ from gui.video import VideoLayout
 from gui.offset import OffsetLayout
 from gui.preferences import PreferencesModal
 from encode.start import start_encode
+from encode.youtube import youtube_encode
 
 
 class MainWindow(QMainWindow):
@@ -28,6 +29,7 @@ class MainWindow(QMainWindow):
 
         state = AppState(self)
         state.exportPathChange.connect(self.close)
+        state.youtubePathChange.connect(self.close)
         self.state = state
 
         self.resize(state.size)
@@ -70,3 +72,5 @@ if __name__ == "__main__":
 
     if state.export_path:
         start_encode(state)
+    elif state.youtube_path:
+        youtube_encode(state)

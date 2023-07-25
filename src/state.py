@@ -60,6 +60,7 @@ class AppState(QObject):
     fitOffsetChange = Signal(int)
     fitPathChange = Signal(str)
     exportPathChange = Signal(str)
+    youtubePathChange = Signal(str)
 
     def __init__(self, parent, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -245,6 +246,15 @@ class AppState(QObject):
         self.exportPathChange.emit(v)
 
     @property
+    def youtube_path(self) -> int:
+        return self._youtube_path
+
+    @youtube_path.setter
+    def youtube_path(self, v: str) -> None:
+        self._youtube_path = v
+        self.youtubePathChange.emit(v)
+
+    @property
     def show_alt(self) -> int:
         return self._settings.value("show_alt", 1)
 
@@ -286,6 +296,15 @@ class AppState(QObject):
             self.exportPathChange.emit(self.export_path)
         else:
             self.export_path = None
+
+    def open_youtube_dialog(self):
+        file_dialog = QFileDialog(self._parent, filter="mp4(*.mp4)")
+        file_dialog.setDirectory(self.video_export_dialog_path)
+        if file_dialog.exec() == QDialog.DialogCode.Accepted:
+            self.youtube_path = file_dialog.selectedUrls()[0].toLocalFile()
+            self.youtubePathChange.emit(self.youtube_path)
+        else:
+            self.youtube_path = None
 
     def open_video_dialog(self):
         file_dialog = QFileDialog(self._parent)

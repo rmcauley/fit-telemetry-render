@@ -21,6 +21,10 @@ class ExportLayout(QHBoxLayout):
         preferences.clicked.connect(preferences_modal.show)
         hbox.addWidget(preferences)
 
+        self.youtube_button = QPushButton(text="Youtube Merge")
+        self.youtube_button.clicked.connect(state.open_youtube_dialog)
+        hbox.addWidget(self.youtube_button)
+
         self.button = QPushButton(text="Export")
         self.button.clicked.connect(state.open_export_dialog)
         hbox.addWidget(self.button)

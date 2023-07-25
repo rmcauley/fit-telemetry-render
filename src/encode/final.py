@@ -6,8 +6,10 @@ from state import AppState
 NVIDIA_MAX_BITRATE = 60000
 
 
-def encode_final(state: AppState, input_file: str, out: str, tempdir: str):
-    duration = round(float(ffmpeg.probe(input_file)["streams"][0]["duration"]))
+def get_merged_stream(state: AppState, input_files):
+    duration = 0
+    for f in input_files:
+        duration += round(float(ffmpeg.probe(f)["streams"][0]["duration"]))
     max_rate = min(NVIDIA_MAX_BITRATE, int(((125000 * 8192) / duration) - 128))
     avg_rate = int(max_rate * 0.9)
     buf_size = avg_rate * 2
@@ -16,16 +18,6 @@ def encode_final(state: AppState, input_file: str, out: str, tempdir: str):
     if state.encoder.startswith("nvidia"):
         input_video_kwargs.update({"hwaccel": "nvdec"})
 
-    input_audio_stream = ffmpeg.input(input_file).audio
-    input_video_stream = ffmpeg.input(input_file, **input_video_kwargs).video
-    overlay_stream = ffmpeg.input(
-        os.path.join(tempdir, r"fit-%05d.png"),
-        framerate="1",
-        thread_queue_size="4096",
-    )
-    overlaid_stream = ffmpeg.overlay(
-        input_video_stream, overlay_stream, eof_action="pass"
-    )
     ffmpeg_options = {
         "c:a": "copy",
         "movflags": "+faststart",
@@ -49,5 +41,22 @@ def encode_final(state: AppState, input_file: str, out: str, tempdir: str):
         )
     else:
         ffmpeg_options.update({"c:v": "libx264", "preset": "fast"})
+    return (input_video_kwargs, ffmpeg_options)
+
+
+def encode_final(state: AppState, input_file: str, out: str, tempdir: str):
+    (input_video_kwargs, ffmpeg_options) = get_merged_stream(state, [input_file])
+
+    input_audio_stream = ffmpeg.input(input_file).audio
+    input_video_stream = ffmpeg.input(input_file, **input_video_kwargs).video
+
+    overlay_stream = ffmpeg.input(
+        os.path.join(tempdir, r"fit-%05d.png"),
+        framerate="1",
+        thread_queue_size="4096",
+    )
+    overlaid_stream = ffmpeg.overlay(
+        input_video_stream, overlay_stream, eof_action="pass"
+    )
     runner = ffmpeg.output(input_audio_stream, overlaid_stream, out, **ffmpeg_options)
     runner.run()
