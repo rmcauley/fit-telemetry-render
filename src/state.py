@@ -51,6 +51,7 @@ class StateForOverlay:
 class AppState(QObject):
     fit: FitFile
     _export_path: str
+    _youtube_path: str
 
     _mime_types: list
 
