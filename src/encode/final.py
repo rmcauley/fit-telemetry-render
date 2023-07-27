@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 import ffmpeg
 from state import AppState
@@ -6,7 +7,7 @@ from state import AppState
 NVIDIA_MAX_BITRATE = 60000
 
 
-def get_merged_stream(state: AppState, input_files):
+def get_merged_stream(state: AppState, input_files: List[str]):
     duration = 0
     for f in input_files:
         duration += round(float(ffmpeg.probe(f)["streams"][0]["duration"]))
@@ -19,7 +20,8 @@ def get_merged_stream(state: AppState, input_files):
         input_video_kwargs.update({"hwaccel": "nvdec"})
 
     ffmpeg_options = {
-        "c:a": "copy",
+        "c:a": "aac",
+        "b:a": "128k",
         "movflags": "+faststart",
         "f": "mp4",
         "y": None,
@@ -44,19 +46,39 @@ def get_merged_stream(state: AppState, input_files):
     return (input_video_kwargs, ffmpeg_options)
 
 
-def encode_final(state: AppState, input_file: str, out: str, tempdir: str):
-    (input_video_kwargs, ffmpeg_options) = get_merged_stream(state, [input_file])
+def get_ffmpeg_args(input_video_kwargs, input_args, ffmpeg_options, out):
+    final_args = []
+    for k, v in input_video_kwargs.items():
+        final_args.append(f"-{k} {v}")
+    final_args += input_args
+    for k, v in ffmpeg_options.items():
+        if v is None:
+            final_args.append(f"-{k}")
+        else:
+            final_args.append(f"-{k} {v}")
+    final_args.append("-f mp4")
+    final_args.append(out)
+    return " ".join(final_args)
 
-    input_audio_stream = ffmpeg.input(input_file).audio
-    input_video_stream = ffmpeg.input(input_file, **input_video_kwargs).video
 
-    overlay_stream = ffmpeg.input(
-        os.path.join(tempdir, r"fit-%05d.png"),
-        framerate="1",
-        thread_queue_size="4096",
+def encode_final(state: AppState, input_files: List[str], out: str, tempdir: str):
+    (input_video_kwargs, ffmpeg_options) = get_merged_stream(state, input_files)
+
+    input_args = [f'-i "{input_filename}"' for input_filename in input_files]
+
+    png_input = os.path.join(tempdir, r"fit-%05d.png")
+    input_args.append(f'-framerate 1 -thread_queue_size 4096 -i "{png_input}"')
+
+    concat_in_filter = "".join(
+        f"[{index}:v:0][{index}:a:0]" for index, _ in enumerate(input_files)
     )
-    overlaid_stream = ffmpeg.overlay(
-        input_video_stream, overlay_stream, eof_action="pass"
+    concat_out_filter = f"concat=n={len(input_files)}:v=1:a=1[mergev][finala];"
+    overlay_filter = f"[mergev][{len(input_args) - 1}:v]overlay=eof_action=pass[finalv]"
+    input_args.append(
+        f'-filter_complex "{concat_in_filter}{concat_out_filter}{overlay_filter}"'
     )
-    runner = ffmpeg.output(input_audio_stream, overlaid_stream, out, **ffmpeg_options)
-    runner.run()
+    input_args.append('-map "[finalv]" -map "[finala]"')
+
+    os.system(
+        "ffmpeg " + get_ffmpeg_args(input_video_kwargs, input_args, ffmpeg_options, out)
+    )

@@ -1,5 +1,7 @@
 import os
 import queue
+from math import ceil
+from typing import List
 from math import floor
 from multiprocessing import Queue, Process, cpu_count
 
@@ -23,22 +25,33 @@ def write_png(state: StateForOverlay, tempdir: str, q: Queue, w: int, h: int):
 
 
 def write_overlay_images(
-    input_location: str,
+    movie_files: List[str],
     state: AppState,
     tempdir: str,
 ):
-    probe = ffmpeg.probe(input_location)
+    probe = ffmpeg.probe(movie_files[0])
+    first_movie_ctime = os.path.getctime(movie_files[0])
     w = probe["streams"][0]["width"]
     h = probe["streams"][0]["height"]
-    duration = round(float(probe["streams"][0]["duration"]))
 
     # Dividing by 2 produces ~60% utilization on a Ryzen 5900X
     # Dividing by 1.5 produces 85-95% utilization on a Ryzen 5900X
     num_processes = floor(cpu_count() / 1.5)
     queue = Queue()
 
-    for i in range(0, duration):
-        queue.put((i, state.fit.get_point(i + state.fit_offset)))
+    duration = 0
+    for m in movie_files:
+        probe = ffmpeg.probe(m)
+        m_duration = float(probe["streams"][0]["duration"])
+        start_time_offset = os.path.getctime(m) - first_movie_ctime
+        for i in range(0, floor(m_duration)):
+            queue.put(
+                (
+                    i + duration,
+                    state.fit.get_point(i + state.fit_offset + start_time_offset),
+                )
+            )
+        duration += floor(m_duration)
 
     overlay_state = state.get_state_for_overlay()
     overlay_state.duration = duration

@@ -20,16 +20,14 @@ The app needs to be run in a terminal, as the export process has no GUI.
 Run `src/main.py`:
 
 1. Open a fit file.
-2. Open your video, or the first GoPro video in the chain. (`GX01#####.mp4`)
+2. Open a video file. Depending on the file name, the app will behave differently:
+
+   - If the file matches a GoPro naming scheme (e.g. `GX010456.mp4`) it will assume all videos in the same directory were recorded on the same day, and will merge all GoPro files.
+   - Otherwise, only the selected video is used.
+
 3. Playback the video, and pause the video when you find a recognizable spot along your route. You can use the movie seek bar.
 4. Move the bottom seek bar until the transparent marker on the map represents the location in the paused video. The opaque blue marker will represent the start location of your video.
 5. Export
-
-Currently, video export will happen in 3 stages:
-
-1. A concatenated version of your GoPro file(s) in proper order will be produced if necessary and placed in the same directory as your GoPro files, if you wish to re-export. This can be deleted afterwards.
-2. Overlay images will be generated.
-3. The final video will be made.
 
 ## Known Issues
 
