@@ -26,20 +26,49 @@ grades.reverse()
 
 
 class DefaultOverlay(BaseOverlay):
-    font_l: ImageFont
-    font_s: ImageFont
+    def __init__(self, state, w: int, h: int):
+        super().__init__(state, w, h)
 
-    sensor_block_w = 400
-    sensor_block_h = 290
-    sensor_block_pad = 20
+        if w < 3000:
+            self.remainer_right_pad = 420
+            self.remainer_bottom_pad = 60
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+            self.speed_right_pad = 80
+            self.speed_bottom_pad = 60
+            self.speed_label_right_pad = 90
+            self.speed_label_bottom_pad = 250
 
-        self.font_xl = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 400)
-        self.font_l = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 200)
-        self.font_m = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 148)
-        self.font_s = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 60)
+            self.heart_right_pad = self.w - 400
+            self.heart_bottom_pad = self.h - 112
+            self.heart_scale = 0.8
+            self.heart_colour_right_pad = self.heart_right_pad + 4
+            self.heart_colour_bottom_pad = self.heart_bottom_pad + 4
+            self.heart_colour_scale = 0.69
+
+            self.font_xl = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 220)
+            self.font_l = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 100)
+            self.font_m = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 70)
+            self.font_s = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 40)
+        else:
+            self.remainer_right_pad = 700
+            self.remainer_bottom_pad = 120
+
+            self.speed_right_pad = 120
+            self.speed_bottom_pad = 120
+            self.speed_label_right_pad = 140
+            self.speed_label_bottom_pad = 450
+
+            self.heart_right_pad = self.w - 680
+            self.heart_bottom_pad = self.h - 230
+            self.heart_scale = 0.8
+            self.heart_colour_right_pad = self.heart_right_pad + 8
+            self.heart_colour_bottom_pad = self.heart_bottom_pad + 8
+            self.heart_colour_scale = 0.69
+
+            self.font_xl = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 400)
+            self.font_l = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 200)
+            self.font_m = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 148)
+            self.font_s = ImageFont.truetype("./fonts/RobotoCondensed-Bold.ttf", 60)
 
     def draw(self, fit_frame: dict) -> None:
         fit_units = self.state.fit_units
@@ -86,7 +115,7 @@ class DefaultOverlay(BaseOverlay):
             remainder.append(str(hr))
 
         self._draw.text(
-            [self.w - 700, self.h - 120],
+            [self.w - self.remainer_right_pad, self.h - self.remainer_bottom_pad],
             "  ".join(remainder),
             fill=(255, 255, 255),
             font=self.font_m,
@@ -103,14 +132,14 @@ class DefaultOverlay(BaseOverlay):
         #     width=70,
         # )
         self._draw.text(
-            [self.w - 120, self.h - 120],
+            [self.w - self.speed_right_pad, self.h - self.speed_bottom_pad],
             str(speed),
             fill=(255, 255, 255),
             font=self.font_xl,
             anchor="rb",
         )
         self._draw.text(
-            [self.w - 140, self.h - 450],
+            [self.w - self.speed_label_right_pad, self.h - self.speed_label_bottom_pad],
             units,
             fill=(255, 255, 255),
             font=self.font_s,
@@ -126,17 +155,18 @@ class DefaultOverlay(BaseOverlay):
                 if v >= hr[0]:
                     heart = hr_emoji[i]
                     break
+
         self._pilmoji.text(
-            [self.w - 680, self.h - 230],
+            [self.heart_right_pad, self.heart_bottom_pad],
             text="🤍",
             anchor="tl",
             font=self.font_m,
-            emoji_scale_factor=0.8,
+            emoji_scale_factor=self.heart_scale,
         )
         self._pilmoji.text(
-            [self.w - 680 + 8, self.h - 222],
+            [self.heart_colour_right_pad, self.heart_colour_bottom_pad],
             text=heart,
             anchor="tl",
             font=self.font_m,
-            emoji_scale_factor=0.69,
+            emoji_scale_factor=self.heart_colour_scale,
         )

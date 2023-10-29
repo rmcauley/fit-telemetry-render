@@ -68,7 +68,11 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.resize(QSize(1024, 768))
+        pil_im = Image.open(
+            os.path.join(os.path.dirname(__file__), "preview.png")
+        ).convert("RGBA")
+
+        self.resize(QSize(pil_im.width / 3, pil_im.height / 3))
 
         watcher = QFileSystemWatcher(self)
         watcher.addPath("./src/overlays/default.py")

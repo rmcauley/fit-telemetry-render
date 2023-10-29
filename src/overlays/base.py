@@ -14,7 +14,7 @@ class BaseOverlay:
         self.w = w
         self.h = h
         self.fill = (0, 0, 0, 0)
-        self._im = Image.new("RGBA", (w, h))
+        self._im = Image.new("RGBA", (self.w, self.h))
         self._draw = ImageDraw.Draw(self._im)
         self._pilmoji = Pilmoji(self._im)
 
