@@ -42,7 +42,7 @@ def write_overlay_images(
     duration = 0
     movie_files_len = len(movie_files)
     for i, m in enumerate(movie_files):
-        print(f"\rProbing {i}/{movie_files_len}: {m}", end="")
+        print(f"\rProbing {i + 1}/{movie_files_len}: {m}", end="")
         probe = ffmpeg.probe(m)
         m_duration = float(probe["streams"][0]["duration"])
         start_time_offset = os.path.getctime(m) - first_movie_ctime
