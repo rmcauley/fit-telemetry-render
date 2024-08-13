@@ -68,7 +68,7 @@ class FitLayout(QVBoxLayout):
         if self._state.fit:
             offset = self._state.fit_offset or 0
             point = self._state.fit.get_point(offset)
-            if point:
+            if point and point.get("position_lat") and point.get("position_long"):
                 lat = point["position_lat"]
                 long = point["position_long"]
                 self._web.page().runJavaScript(f"setOffsetPoint({lat}, {long})")
@@ -77,7 +77,7 @@ class FitLayout(QVBoxLayout):
         if self._state.fit:
             offset = (self._state.video_sec or 0) + self._state.fit_offset
             point = self._state.fit.get_point(offset)
-            if point:
+            if point and point.get("position_lat") and point.get("position_long"):
                 lat = point["position_lat"]
                 long = point["position_long"]
                 self._web.page().runJavaScript(f"setCurrentPoint({lat}, {long})")

@@ -1,4 +1,9 @@
 pillow
-pyside6
+# Newer versions have issues rendering video on Windows
+pyside6==6.6.2
 ffmpeg-python
+# Newer versions break pilmoji
+emoji==2.11.1
 pilmoji
+fitdecode
+folium
